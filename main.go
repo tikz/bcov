@@ -1,20 +1,21 @@
 package main
 
 import (
+	"bcov/bam"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"os"
 
-	"github.com/biogo/hts/bam"
-	"github.com/biogo/hts/bgzf"
 	"github.com/biogo/hts/sam"
 
 	"time"
 
 	"github.com/theckman/yacspin"
 )
+
+var Version = "development"
 
 var (
 	require = flag.Int("f", 0, "required flags")
@@ -27,6 +28,7 @@ var (
 const maxFlag = int(^sam.Flags(0))
 
 func main() {
+	fmt.Println("Version:\t", Version)
 	flag.Parse()
 	if *help {
 		flag.Usage()
@@ -45,34 +47,6 @@ func main() {
 	}
 	excFlag := sam.Flags(*exclude)
 
-	var r io.Reader
-	if *file == "" {
-		r = os.Stdin
-	} else {
-		f, err := os.Open(*file)
-		if err != nil {
-			log.Fatalf("could not open file %q:", err)
-		}
-		defer f.Close()
-		ok, err := bgzf.HasEOF(f)
-		if err != nil {
-			log.Fatalf("could not open file %q:", err)
-		}
-		if !ok {
-			log.Printf("file %q has no bgzf magic block: may be truncated", *file)
-		}
-		r = f
-	}
-
-	b, err := bam.NewReader(r, *conc)
-	if err != nil {
-		log.Fatalf("could not read bam:", err)
-	}
-	defer b.Close()
-
-	// We only need flags, so skip variable length data.
-	b.Omit(bam.AllVariableLengthData)
-
 	cfg := yacspin.Config{
 		Frequency:       100 * time.Millisecond,
 		CharSet:         yacspin.CharSets[59],
@@ -83,10 +57,14 @@ func main() {
 		StopColors:      []string{"fgGreen"},
 	}
 
-	spinner, err := yacspin.New(cfg)
+	spinner, _ := yacspin.New(cfg)
 	// handle the error
+	spinner.Start()
 
-	err = spinner.Start()
+	b, err := bam.NewReader(*file)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	var n int
 	var depth int
@@ -119,8 +97,8 @@ func main() {
 			n++
 		}
 	}
-
-	err = spinner.Stop()
+	spinner.Stop()
+	b.Close()
 
 	fmt.Println(n)
 }
