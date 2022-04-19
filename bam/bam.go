@@ -1,16 +1,29 @@
 package bam
 
 import (
+	"bcov/utils"
 	"errors"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/biogo/hts/bam"
 	"github.com/biogo/hts/bgzf"
+	"github.com/biogo/hts/sam"
 )
 
-func NewReader(path string) (*bam.Reader, error) {
+type Reader struct {
+	Path     string
+	Filename string
+	SHA256   string
+	reader   *bam.Reader
+}
+
+func NewReader(path string) (*Reader, error) {
+	reader := &Reader{Path: path, Filename: filepath.Base(path)}
+	// reader.sha256()
+
 	var r io.Reader
 	if path == "" {
 		r = os.Stdin
@@ -36,5 +49,20 @@ func NewReader(path string) (*bam.Reader, error) {
 
 	b.Omit(bam.AllVariableLengthData)
 
-	return b, nil
+	reader.reader = b
+	return reader, nil
+}
+
+func (r *Reader) sha256() error {
+	spinner := utils.NewSpinner(fmt.Sprintf("SHA256sum %s", r.Path))
+	spinner.Start()
+	defer spinner.StopDuration()
+
+	var err error
+	r.SHA256, err = utils.SHA256FileHash(r.Path)
+	return err
+}
+
+func (r *Reader) Read() (*sam.Record, error) {
+	return r.reader.Read()
 }

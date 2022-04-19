@@ -1,7 +1,10 @@
+VERSION = $(shell git describe --tags)
+COMMIT = $(shell git rev-parse --short HEAD)
+
 all: build
 
 build: dep
-	go build -ldflags="-X 'main.Version=v1.0.0'"
+	go build -ldflags="-X 'main.Version=$(VERSION)' -X 'main.CommitHash=$(COMMIT)'"
 
 test: dep
 	go test ./... -v

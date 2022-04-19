@@ -1,3 +1,6 @@
 bcov
+*.db
 
+README.md
+.vscode
 B0434109PTC_Result
