@@ -29,8 +29,8 @@ type Region struct {
 
 type DepthCoverage struct {
 	ID             uint `gorm:"primarykey"`
-	BAMFileID      uint `gorm:"index"`
 	RegionID       uint `gorm:"index"`
+	BAMFileID      uint `gorm:"index"`
 	DepthCoverages string
 	Depth          uint8
 	Coverage       float64

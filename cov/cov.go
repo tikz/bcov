@@ -221,7 +221,7 @@ func Load(bamPath string) {
 		}
 
 		readChromosome := rec.Ref.Name()
-		readStart, readEnd := uint64(rec.Pos), uint64(rec.End())
+		readStart, readEnd := uint64(rec.Pos+1), uint64(rec.End())
 		if readStart%1000 == 0 {
 			spinner.Message(fmt.Sprintf("chromosome %s pos %d", readChromosome, readStart))
 		}
@@ -258,7 +258,7 @@ func Load(bamPath string) {
 		// if (sameChromosome && pastPosition) || pastChromosome {
 
 		if (readChromosome == regions[0].Region.Chromosome && readStart > regions[0].Region.End) || utils.ChromosomeIndex(readChromosome) > utils.ChromosomeIndex(regions[0].Region.Chromosome) {
-			// fmt.Println(regions[0].PositionDepth)
+			fmt.Println(regions[0].PositionDepth)
 			regions = regions[1:]
 		}
 

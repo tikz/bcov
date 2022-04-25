@@ -1,5 +1,5 @@
 bcov
-*.db
+*.db*
 
 README.md
 .vscode

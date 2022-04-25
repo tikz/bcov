@@ -43,6 +43,6 @@ func (s *Spinner) Stop(msg string) {
 
 func (s *Spinner) StopDuration() {
 	duration := time.Now().Sub(s.startTime)
-	s.spinner.StopMessage(fmt.Sprintf("done in %.0fm %.0fs", duration.Minutes(), duration.Seconds()))
+	s.spinner.StopMessage(fmt.Sprintf("done in %s", duration))
 	s.spinner.Stop()
 }
