@@ -12,16 +12,16 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-var db *gorm.DB
+var DB *gorm.DB
 
 func ConnectDB() {
 	var err error
-	db, err = gorm.Open(sqlite.Open("test.db"), &gorm.Config{CreateBatchSize: 100, Logger: logger.Default.LogMode(logger.Silent)})
+	DB, err = gorm.Open(sqlite.Open("test.db"), &gorm.Config{CreateBatchSize: 100, Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		log.Fatalf("failed to connect database")
 	}
 
-	if res := db.Exec("PRAGMA synchronous = OFF", nil); res.Error != nil {
+	if res := DB.Exec("PRAGMA synchronous = OFF", nil); res.Error != nil {
 		panic(res.Error)
 	}
 
@@ -30,10 +30,10 @@ func ConnectDB() {
 
 func StoreFile(file string, hash string) (bamFileID uint) {
 	var bamFileDB BAMFile
-	result := db.First(&bamFileDB, "sha256_sum = ?", hash)
+	result := DB.First(&bamFileDB, "sha256_sum = ?", hash)
 	if result.RowsAffected == 0 {
 		bamFileDB = BAMFile{Name: file, SHA256Sum: hash}
-		db.Create(&bamFileDB)
+		DB.Create(&bamFileDB)
 	}
 
 	return bamFileDB.ID
@@ -41,35 +41,35 @@ func StoreFile(file string, hash string) (bamFileID uint) {
 
 func StoreRegion(region *bed.Region) (regionID uint) {
 	var regionDB Region
-	result := db.Where("chromosome = ? AND start = ? AND end = ?", region.Chromosome, region.Start, region.End).First(&regionDB)
+	result := DB.Where("chromosome = ? AND start = ? AND end = ?", region.Chromosome, region.Start, region.End).First(&regionDB)
 	if result.RowsAffected == 0 {
 		regionDB = Region{Chromosome: region.Chromosome, Start: region.Start, End: region.End}
-		db.Create(&regionDB)
+		DB.Create(&regionDB)
 	}
 
 	return regionDB.ID
 }
 
-func StoreDepthCoverages(fileID uint, regionID uint, depthCoverages map[int]float64) {
-	var dcs [100]DepthCoverage
+// func StoreDepthCoverages(fileID uint, regionID uint, depthCoverages map[int]float64) {
+// 	var dcs [100]DepthCoverage
 
-	// var dcDB DepthCoverage
-	// result := db.Where("bam_file_id = ? AND region_id = ?", fileID, regionID).First(&dcDB)
-	// if result.RowsAffected == 0 {
-	for i := 1; i <= 100; i++ {
-		dcs[i-1] = DepthCoverage{BAMFileID: fileID, RegionID: regionID, Depth: uint8(i), Coverage: depthCoverages[i]}
-	}
-	db.Create(&dcs)
-	// }
-}
+// 	// var dcDB DepthCoverage
+// 	// result := db.Where("bam_file_id = ? AND region_id = ?", fileID, regionID).First(&dcDB)
+// 	// if result.RowsAffected == 0 {
+// 	for i := 1; i <= 100; i++ {
+// 		dcs[i-1] = DepthCoverage{BAMFileID: fileID, RegionID: regionID, Depth: uint8(i), Coverage: depthCoverages[i]}
+// 	}
+// 	DB.Create(&dcs)
+// 	// }
+// }
 
 func StoreGene(name string, ensemblID string) (geneID uint, created bool) {
 	var geneDB Gene
-	result := db.Where("ensembl_id = ?", ensemblID).First(&geneDB)
+	result := DB.Where("ensembl_id = ?", ensemblID).First(&geneDB)
 	if result.RowsAffected == 0 {
 		created = true
 		geneDB = Gene{Name: name, EnsemblID: ensemblID}
-		db.Create(&geneDB)
+		DB.Create(&geneDB)
 	}
 
 	return geneDB.ID, created
@@ -81,12 +81,12 @@ func StoreRegions(geneID uint, regions []ensembl.Region) {
 	for _, region := range regions {
 		regionsDB = append(regionsDB, Region{GeneID: geneID, Chromosome: region.Chromosome, Start: region.Start, End: region.End, ExonNumber: region.ExonNumber})
 	}
-	db.Create(&regionsDB)
+	DB.Create(&regionsDB)
 }
 
 func GetRegions() []Region {
 	var regions []Region
-	db.Find(&regions)
+	DB.Find(&regions)
 
 	// karyotypic order
 	// sort by chromosome then start position
@@ -114,6 +114,6 @@ func GetChromosomeRange(chromosome string) (uint64, uint64) {
 
 	var result Result
 
-	db.Raw("select min(start) as min, max(end) as max from regions where chromosome = ?", chromosome).Scan(&result)
+	DB.Raw("select min(start) as min, max(end) as max from regions where chromosome = ?", chromosome).Scan(&result)
 	return result.Min, result.Max
 }

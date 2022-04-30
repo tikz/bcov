@@ -3,11 +3,8 @@ package main
 import (
 	"bcov/cov"
 	"bcov/db"
-	"bcov/ensembl"
-	"bcov/utils"
 	"flag"
 	"fmt"
-	"log"
 
 	"github.com/biogo/hts/sam"
 	"github.com/fatih/color"
@@ -76,62 +73,46 @@ const maxFlag = int(^sam.Flags(0))
 // }
 
 func main() {
-	// cov.Start()
-	// start, end := db.GetChromosomeRange("1")
-
-	// chromosome := make([end - start]uint64)
-	// for i := start; i < end; i++ {
-	// 	chromosome[i] = 0
-	// }
-	// regions := db.GetRegions()
-	// fmt.Println(regions)
-	// time.Sleep(8 * time.Minute)
-
-	// for _, region := range regions {
-	// 	fmt.Println(region.Chromosome, region.Start)
-	// }
 	cov.Load("B0434109PTC_Result/B0434109PTC.bam")
-}
 
-func main22() {
-	spinner := utils.NewSpinner("Ensembl")
-	spinner.Start()
-	spinner.Message("connecting to public MySQL database")
-	ensemblDB, err := ensembl.Connect()
-	if err != nil {
-		log.Fatal(err)
-	}
+	// spinner := utils.NewSpinner("Ensembl")
+	// spinner.Start()
+	// spinner.Message("connecting to public MySQL database")
+	// ensemblDB, err := ensembl.Connect()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	spinner.Message("retrieving exons...")
-	exons, err := ensembl.GetExons(ensemblDB)
-	if err != nil {
-		log.Fatal(err)
-	}
-	spinner.StopDuration()
+	// spinner.Message("retrieving exons...")
+	// exons, err := ensembl.GetExons(ensemblDB)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// spinner.StopDuration()
 
-	spinner = utils.NewSpinner("Load")
-	spinner.Start()
-	spinner.Message("loading exons")
+	// spinner = utils.NewSpinner("Load")
+	// spinner.Start()
+	// spinner.Message("loading exons")
 
-	geneExons := make(map[string][]ensembl.Region)
-	for _, exon := range exons {
-		if _, ok := geneExons[exon.GeneName]; !ok {
-			geneExons[exon.GeneName] = make([]ensembl.Region, 0)
-		}
-		geneExons[exon.GeneName] = append(geneExons[exon.GeneName], exon)
-	}
+	// geneExons := make(map[string][]ensembl.Region)
+	// for _, exon := range exons {
+	// 	if _, ok := geneExons[exon.GeneName]; !ok {
+	// 		geneExons[exon.GeneName] = make([]ensembl.Region, 0)
+	// 	}
+	// 	geneExons[exon.GeneName] = append(geneExons[exon.GeneName], exon)
+	// }
 
-	exonCount := 0
-	for geneName, exons := range geneExons {
-		spinner.Message(fmt.Sprintf("%s: %d exons", geneName, len(exons)))
-		geneID, created := db.StoreGene(geneName, exons[0].StableID)
-		if created {
-			db.StoreRegions(geneID, exons)
-		}
-		exonCount += len(exons)
-	}
+	// exonCount := 0
+	// for geneName, exons := range geneExons {
+	// 	spinner.Message(fmt.Sprintf("%s: %d exons", geneName, len(exons)))
+	// 	geneID, created := db.StoreGene(geneName, exons[0].StableID)
+	// 	if created {
+	// 		db.StoreRegions(geneID, exons)
+	// 	}
+	// 	exonCount += len(exons)
+	// }
 
-	spinner.Stop(fmt.Sprintf("%d exons in %d genes", exonCount, len(geneExons)))
+	// spinner.Stop(fmt.Sprintf("%d exons in %d genes", exonCount, len(geneExons)))
 
 }
 

@@ -13,9 +13,6 @@ import (
 	"github.com/fatih/color"
 )
 
-type Position uint64
-type Depth uint64
-
 type RegionDepths struct {
 	Region        db.Region
 	PositionDepth map[Position]Depth
@@ -99,22 +96,41 @@ func NewLoader(bamPath string, bedPath string) *Loader {
 // 	}
 // }
 
-func dbStorer(bamFilename string, bamHash string, regionDepths <-chan RegionDepths) {
-	bamFileID := db.StoreFile(bamFilename, bamHash)
-	for rd := range regionDepths {
-		depthCoverages := make(map[int]float64)
-		for i := 1; i <= 100; i++ {
-			count := 0
+// func dbStorer(bamFilename string, bamHash string, regionDepths <-chan RegionDepths) {
+// 	bamFileID := db.StoreFile(bamFilename, bamHash)
+// 	for rd := range regionDepths {
+// 		depthCoverages := make(map[int]float64)
+// 		for i := 1; i <= 100; i++ {
+// 			count := 0
 
-			for _, depth := range rd.PositionDepth {
-				if int(depth) >= i {
-					count++
-				}
+// 			for _, depth := range rd.PositionDepth {
+// 				if int(depth) >= i {
+// 					count++
+// 				}
+// 			}
+// 			depthCoverages[i] = float64(count) / float64(rd.Region.End-rd.Region.Start+1)
+// 		}
+// 		db.StoreDepthCoverages(bamFileID, rd.Region.ID, depthCoverages)
+// 	}
+// }
+
+func dbStoreDepthCoverage(bamFileID uint, rd RegionDepths) {
+	// Compute coverage per depth
+
+	var depthCoverages []db.DepthCoverage
+	for i := 1; i <= 100; i++ {
+		count := 0
+
+		for _, depth := range rd.PositionDepth {
+			if int(depth) >= i {
+				count++
 			}
-			depthCoverages[i] = float64(count) / float64(rd.Region.End-rd.Region.Start+1)
 		}
-		db.StoreDepthCoverages(bamFileID, rd.Region.ID, depthCoverages)
+		depthCoverages = append(depthCoverages, db.DepthCoverage{Depth: uint8(i), Coverage: uint8(100 * float64(count) / float64(rd.Region.End-rd.Region.Start+1))})
 	}
+
+	regionDepthCoverage := &db.RegionDepthCoverage{RegionID: rd.Region.ID, BAMFileID: bamFileID, DepthCoverages: depthCoverages}
+	db.DB.Create(&regionDepthCoverage)
 }
 
 func pof() {
@@ -170,20 +186,6 @@ func bamWorker(rdIn <-chan RegionDepths, bamReadsCh <-chan *sam.Record, rdOut ch
 	}
 }
 
-func max(a uint64, b uint64) uint64 {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func min(a uint64, b uint64) uint64 {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func initializeRegionDepths() []RegionDepths {
 	regions := db.GetRegions()
 	var regionDepths []RegionDepths
@@ -204,14 +206,13 @@ func Load(bamPath string) {
 		log.Fatal(err)
 	}
 
+	bamFileID := db.StoreFile(bamReader.Filename, bamReader.SHA256)
+
 	spinner := utils.NewSpinner(fmt.Sprintf("reading %s", bamPath))
 	spinner.Start()
 	defer spinner.StopDuration()
-	for {
-		if len(regions) == 0 {
-			break
-		}
 
+	for len(regions) != 0 {
 		rec, err := bamReader.Read()
 		if err == io.EOF {
 			return
@@ -230,6 +231,10 @@ func Load(bamPath string) {
 		flags := !(rec.Flags&sam.Duplicate == sam.Duplicate)
 
 		if flags {
+			if utils.ChromosomeIndex(regions[0].Region.Chromosome) > utils.ChromosomeIndex(readChromosome) {
+				continue
+			}
+
 			// Add 1 to positions that fall within this read
 			// (NOTE: iterating regions because >>a read can fall inside in more than 1 region<<)
 			for _, r := range regions {
@@ -258,7 +263,7 @@ func Load(bamPath string) {
 		// if (sameChromosome && pastPosition) || pastChromosome {
 
 		if (readChromosome == regions[0].Region.Chromosome && readStart > regions[0].Region.End) || utils.ChromosomeIndex(readChromosome) > utils.ChromosomeIndex(regions[0].Region.Chromosome) {
-			fmt.Println(regions[0].PositionDepth)
+			dbStoreDepthCoverage(bamFileID, regions[0])
 			regions = regions[1:]
 		}
 
