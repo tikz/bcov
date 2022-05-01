@@ -32,7 +32,7 @@ func bamWorker(bamReader *bam.Reader, regions []Region, rChan chan<- Region) {
 			go spinner.Message(fmt.Sprintf("chromosome %s pos %d Mpb (%.2f%%)", readChromosome, readStart/100000, 100*float64(readStart)/float64(utils.CHROMOSOME_LENGTHS[utils.ChromosomeIndex(readChromosome)-1])))
 		}
 
-		// Sequencing read SAM flags to exclude from counting, bitwise
+		// SAM flags to exclude
 		flags := !(rec.Flags&sam.Duplicate == sam.Duplicate)
 
 		if flags {
@@ -40,8 +40,7 @@ func bamWorker(bamReader *bam.Reader, regions []Region, rChan chan<- Region) {
 				continue
 			}
 
-			// Add 1 to positions that fall within this read
-			// (NOTE: iterating regions because >>a read can fall inside in more than 1 region<<)
+			// Regions positions that fall within this read
 			for _, r := range regions {
 				overlap := r.Chromosome == readChromosome && readStart <= r.End && readEnd >= r.Start
 				if overlap {
@@ -53,8 +52,7 @@ func bamWorker(bamReader *bam.Reader, regions []Region, rChan chan<- Region) {
 			}
 		}
 
-		// Check if first region is way past the current read coordinates (we are
-		// done calculating this region positions depth) to delete it from memory and store in DB
+		// Check if current region is way past the current read coordinates (done counting)
 		//
 		// sameChromosome := readChromosome == regions[0].Region.Chromosome
 		// pastPosition := readStart > regions[0].Region.End
@@ -66,7 +64,7 @@ func bamWorker(bamReader *bam.Reader, regions []Region, rChan chan<- Region) {
 			regions = regions[1:]
 		}
 	}
-
+	spinner.StopDuration()
 	close(rChan)
 }
 
@@ -98,7 +96,7 @@ func Load(bamPath string) {
 	if !created {
 		fmt.Printf("File %s (%s) already exists in database\n", bamReader.Path, hash)
 		fmt.Println()
-		fmt.Printf("If you want to load this file again, before run -delete-bam %s\n", hash)
+		fmt.Printf("If you want to load this file again, run -delete-bam %s\n", hash)
 		return
 	}
 	regions := NewRegionsFromDB()
