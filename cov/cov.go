@@ -55,10 +55,10 @@ func bamWorker(bamReader *bam.Reader, regions []Region, rChan chan<- Region) {
 		// Check if current region is way past the current read coordinates (done counting)
 		//
 		// 1. sameChromosome := readChromosome == regions[0].Region.Chromosome
-		// 2. pastPosition := readStart > regions[0].Region.End
+		// 2. pastRegion := readStart > regions[0].Region.End
 		// 3. pastChromosome := utils.CHROMOSOME_INDEX[readChromosome] > utils.CHROMOSOME_INDEX[regions[0].Region.Chromosome]
 
-		// Condition: if (sameChromosome && pastPosition) || pastChromosome {
+		// Condition: if (sameChromosome && pastRegion) || pastChromosome {
 		//
 		// (not defined as actual variables for performance, the evaluation can be resolved prematurely)
 
