@@ -50,7 +50,7 @@ func ConnectSQLite() {
 		log.Fatalf("failed to connect database")
 	}
 
-	if res := DB.Exec("PRAGMA synchronous = OFF; PRAGMA foreign_keys = ON;", nil); res.Error != nil {
+	if res := DB.Exec("PRAGMA synchronous = OFF; PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;", nil); res.Error != nil {
 		panic(res.Error)
 	}
 }
@@ -77,19 +77,6 @@ func StoreRegion(region *bed.Region) (regionID uint) {
 
 	return regionDB.ID
 }
-
-// func StoreDepthCoverages(fileID uint, regionID uint, depthCoverages map[int]float64) {
-// 	var dcs [100]DepthCoverage
-
-// 	// var dcDB DepthCoverage
-// 	// result := db.Where("bam_file_id = ? AND region_id = ?", fileID, regionID).First(&dcDB)
-// 	// if result.RowsAffected == 0 {
-// 	for i := 1; i <= 100; i++ {
-// 		dcs[i-1] = DepthCoverage{BAMFileID: fileID, RegionID: regionID, Depth: uint8(i), Coverage: depthCoverages[i]}
-// 	}
-// 	DB.Create(&dcs)
-// 	// }
-// }
 
 func StoreGene(name string, ensemblID string) (geneID uint, created bool) {
 	var geneDB Gene
@@ -132,16 +119,4 @@ func GetRegions() []Region {
 	})
 
 	return regions
-}
-
-func GetChromosomeRange(chromosome string) (uint64, uint64) {
-	type Result struct {
-		Min uint64
-		Max uint64
-	}
-
-	var result Result
-
-	DB.Raw("select min(start) as min, max(end) as max from regions where chromosome = ?", chromosome).Scan(&result)
-	return result.Min, result.Max
 }
