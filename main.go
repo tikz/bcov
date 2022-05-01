@@ -1,23 +1,22 @@
 package main
 
 import (
-	"bcov/cov"
-	"bcov/db"
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/biogo/hts/sam"
 	"github.com/fatih/color"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
 var (
-	require = flag.Int("f", 0, "required flags")
-	exclude = flag.Int("F", 0, "excluded flags")
-	file    = flag.String("file", "", "input file (empty for stdin)")
-	conc    = flag.Int("threads", 0, "number of threads to use (0 = auto)")
-	help    = flag.Bool("help", false, "display help")
+	testDb       = flag.Bool("test-db", false, "Test database connection")
+	fetchRegions = flag.Bool("fetch-regions", false, "Fetch regions from Ensembl and store in DB")
+	web          = flag.Bool("web", false, "Run web server")
+	bam          = flag.String("bam", "", "load BAM file into the database")
+	deleteBam    = flag.String("delete-bam", "", "delete BAM file from the database with SHA256")
+	region       = flag.String("region", "", "Print per position depth of a given range, expressed as <chromosome>:<start>-<end>")
+	help         = flag.Bool("help", false, "Display help")
 )
 
 func init() {
@@ -25,12 +24,46 @@ func init() {
 	d.Println("Bcov")
 	fmt.Println("Version: ", Version, "\t\tCommit: ", CommitHash)
 	fmt.Println()
-	// connectDB()
-
-	db.ConnectDB()
 }
 
 const maxFlag = int(^sam.Flags(0))
+
+func main() {
+	flag.Parse()
+	if *help {
+		fmt.Println("Usage:")
+		flag.PrintDefaults()
+		os.Exit(0)
+	}
+
+	if *testDb {
+		cliTestDB()
+		os.Exit(0)
+	}
+
+	if *fetchRegions {
+		cliFetchRegions()
+		os.Exit(0)
+	}
+
+	if *region != "" {
+		cliRegion()
+		os.Exit(0)
+	}
+
+	if *bam != "" {
+		cliLoadBAM()
+		os.Exit(0)
+	}
+
+	if *deleteBam != "" {
+		cliDeleteBam()
+		os.Exit(0)
+	}
+
+	fmt.Println("Usage:")
+	flag.PrintDefaults()
+}
 
 // func main2() {
 // 	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
@@ -72,47 +105,10 @@ const maxFlag = int(^sam.Flags(0))
 // db.Delete(&product, 1)
 // }
 
-func main() {
-	cov.Load("B0434109PTC_Result/B0434109PTC.bam")
+func mainx() {
 
-	// spinner := utils.NewSpinner("Ensembl")
-	// spinner.Start()
-	// spinner.Message("connecting to public MySQL database")
-	// ensemblDB, err := ensembl.Connect()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// spinner.Message("retrieving exons...")
-	// exons, err := ensembl.GetExons(ensemblDB)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// spinner.StopDuration()
-
-	// spinner = utils.NewSpinner("Load")
-	// spinner.Start()
-	// spinner.Message("loading exons")
-
-	// geneExons := make(map[string][]ensembl.Region)
-	// for _, exon := range exons {
-	// 	if _, ok := geneExons[exon.GeneName]; !ok {
-	// 		geneExons[exon.GeneName] = make([]ensembl.Region, 0)
-	// 	}
-	// 	geneExons[exon.GeneName] = append(geneExons[exon.GeneName], exon)
-	// }
-
-	// exonCount := 0
-	// for geneName, exons := range geneExons {
-	// 	spinner.Message(fmt.Sprintf("%s: %d exons", geneName, len(exons)))
-	// 	geneID, created := db.StoreGene(geneName, exons[0].StableID)
-	// 	if created {
-	// 		db.StoreRegions(geneID, exons)
-	// 	}
-	// 	exonCount += len(exons)
-	// }
-
-	// spinner.Stop(fmt.Sprintf("%d exons in %d genes", exonCount, len(geneExons)))
+	// cov.Load("B0434109PTC_Result/B0434109PTC.bam")
+	// cov.GetRegionDepth("B0434109PTC_Result/B0434109PTC.bam", "4", 103910000, 103913000)
 
 }
 

@@ -16,13 +16,11 @@ import (
 type Reader struct {
 	Path     string
 	Filename string
-	SHA256   string
 	reader   *bam.Reader
 }
 
 func NewReader(path string) (*Reader, error) {
 	reader := &Reader{Path: path, Filename: filepath.Base(path)}
-	// reader.sha256()
 
 	var r io.Reader
 	if path == "" {
@@ -53,14 +51,18 @@ func NewReader(path string) (*Reader, error) {
 	return reader, nil
 }
 
-func (r *Reader) sha256() error {
+func (r *Reader) SHA256sum() string {
 	spinner := utils.NewSpinner(fmt.Sprintf("SHA256sum %s", r.Path))
 	spinner.Start()
 	defer spinner.StopDuration()
 
-	var err error
-	r.SHA256, err = utils.SHA256FileHash(r.Path)
-	return err
+	hash, err := utils.SHA256FileHash(r.Path)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	return hash
 }
 
 func (r *Reader) Read() (*sam.Record, error) {

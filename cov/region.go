@@ -1,32 +1,39 @@
 package cov
 
-import "bcov/db"
+import (
+	"bcov/db"
+)
 
 type Position uint64
 type Depth uint64
 type Coverage uint8
 
 type Region struct {
-	ID         uint
-	GeneID     uint
-	Chromosome string
-	Start      uint64
-	End        uint64
-	ExonNumber uint
-
+	Chromosome     string
+	Start          uint64
+	End            uint64
 	PositionDepth  map[Position]Depth
 	DepthCoverages map[Depth]Coverage
+
+	ID         uint
+	GeneID     uint
+	ExonNumber uint
 }
 
-// func NewRegion() *Region {
+func NewRegion(chromosome string, start uint64, end uint64) Region {
+	return Region{
+		Chromosome:    chromosome,
+		Start:         start,
+		End:           end,
+		PositionDepth: make(map[Position]Depth),
+	}
+}
 
-// }
-
-func NewRegionsFromDB() []*Region {
+func NewRegionsFromDB() []Region {
 	dbRegions := db.GetRegions()
-	var regions []*Region
+	var regions []Region
 	for _, region := range dbRegions {
-		regions = append(regions, &Region{
+		regions = append(regions, Region{
 			ID:            region.ID,
 			GeneID:        region.GeneID,
 			Chromosome:    region.Chromosome,
@@ -77,43 +84,29 @@ func (r *Region) ComputeDepthCoverage(depth Depth) Coverage {
 // Stores the result in Region.DepthCoverages.
 func (r *Region) ComputeDepthCoverageRange(fromDepth Depth, toDepth Depth) {
 	r.DepthCoverages = make(map[Depth]Coverage)
-	for i := fromDepth; i <= toDepth; i++ {
+	r.DepthCoverages[1] = r.ComputeDepthCoverage(1)
+	for i := fromDepth; i <= toDepth; i += 10 {
 		r.DepthCoverages[i] = r.ComputeDepthCoverage(i)
 	}
 }
 
-func (r *Region) ComputeDepthCoverages() {
-	r.DepthCoverages = make(map[Depth]Coverage)
-
-	for i := 1; i <= 100; i++ {
-		count := 0
-
-		for _, depth := range r.PositionDepth {
-			if int(depth) >= i {
-				count++
-			}
-		}
-		r.DepthCoverages[Depth(i)] = Coverage(100 * float64(count) / float64(r.End-r.Start+1))
-	}
-}
-
-func dbStoreDepthCoverage(bamFileID uint, rd RegionDepths) {
-	// Compute coverage per depth
-
+// StoreDepthCoverages computes and stores the depth coverages in the DB, under the given BAM file ID.
+func (r *Region) StoreDepthCoverages(bamFileID uint) {
+	r.ComputeDepthCoverageRange(1, 100)
 	var depthCoverages []db.DepthCoverage
-	for i := 1; i <= 100; i++ {
-		count := 0
 
-		for _, depth := range rd.PositionDepth {
-			if int(depth) >= i {
-				count++
-			}
-		}
-		depthCoverages = append(depthCoverages, db.DepthCoverage{Depth: uint8(i), Coverage: uint8(100 * float64(count) / float64(rd.Region.End-rd.Region.Start+1))})
+	for depth, coverage := range r.DepthCoverages {
+		depthCoverages = append(depthCoverages,
+			db.DepthCoverage{Depth: uint8(depth),
+				Coverage: uint8(coverage),
+			})
 	}
 
-	regionDepthCoverage := &db.RegionDepthCoverage{RegionID: rd.Region.ID, BAMFileID: bamFileID, DepthCoverages: depthCoverages}
-	db.DB.Create(&regionDepthCoverage)
+	db.DB.Create(&db.RegionDepthCoverage{
+		RegionID:       r.ID,
+		BAMFileID:      bamFileID,
+		DepthCoverages: depthCoverages,
+	})
 }
 
 func max(a uint64, b uint64) uint64 {

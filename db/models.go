@@ -7,7 +7,7 @@ type BAMFile struct {
 	ID                   uint   `gorm:"primarykey"`
 	SHA256Sum            string `gorm:"uniqueIndex"`
 	Name                 string
-	RegionDepthCoverages []RegionDepthCoverage
+	RegionDepthCoverages []RegionDepthCoverage `gorm:"constraint:OnDelete:CASCADE;"`
 }
 
 type Gene struct {
@@ -28,10 +28,10 @@ type Region struct {
 }
 
 type RegionDepthCoverage struct {
-	ID             uint `gorm:"primarykey"`
-	RegionID       uint `gorm:"index"`
-	BAMFileID      uint `gorm:"index"`
-	DepthCoverages []DepthCoverage
+	ID             uint            `gorm:"primarykey"`
+	RegionID       uint            `gorm:"index"`
+	BAMFileID      uint            `gorm:"index"`
+	DepthCoverages []DepthCoverage `gorm:"constraint:OnDelete:CASCADE;"`
 }
 
 type DepthCoverage struct {

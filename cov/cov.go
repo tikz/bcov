@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 
 	"github.com/biogo/hts/sam"
 	"github.com/fatih/color"
@@ -137,54 +136,54 @@ func pof() {
 
 }
 
-func bamWorker(rdIn <-chan RegionDepths, bamReadsCh <-chan *sam.Record, rdOut chan<- RegionDepths) {
-	rd := <-rdIn
+// func bamWorker(rdIn <-chan RegionDepths, bamReadsCh <-chan *sam.Record, rdOut chan<- RegionDepths) {
+// 	rd := <-rdIn
 
-	spinner := utils.NewSpinner(fmt.Sprintf("reading"))
-	spinner.Start()
-	defer spinner.StopDuration()
+// 	spinner := utils.NewSpinner(fmt.Sprintf("reading"))
+// 	spinner.Start()
+// 	defer spinner.StopDuration()
 
-	for {
-		rec := <-bamReadsCh
+// 	for {
+// 		rec := <-bamReadsCh
 
-		chromosome := rec.Ref.Name()
-		readStart, readEnd := uint64(rec.Pos), uint64(rec.End())
-		if readStart%1000 == 0 {
-			spinner.Message(fmt.Sprintf("chromosome %s pos %d", chromosome, readStart))
-		}
+// 		chromosome := rec.Ref.Name()
+// 		readStart, readEnd := uint64(rec.Pos), uint64(rec.End())
+// 		if readStart%1000 == 0 {
+// 			spinner.Message(fmt.Sprintf("chromosome %s pos %d", chromosome, readStart))
+// 		}
 
-		// Read falls outside of current region
-		if readStart > rd.Region.End && chromosome == rd.Region.Chromosome {
-			if rd.Region.ID == 209414 {
-				fmt.Println(rd.Region)
-				fmt.Println(rd.PositionDepth)
-				fmt.Println()
-				os.Exit(0)
-			}
-			rdOut <- rd
-			rd = <-rdIn
-		}
+// 		// Read falls outside of current region
+// 		if readStart > rd.Region.End && chromosome == rd.Region.Chromosome {
+// 			if rd.Region.ID == 209414 {
+// 				fmt.Println(rd.Region)
+// 				fmt.Println(rd.PositionDepth)
+// 				fmt.Println()
+// 				os.Exit(0)
+// 			}
+// 			rdOut <- rd
+// 			rd = <-rdIn
+// 		}
 
-		// Sequencing read SAM flags to exclude from counting, bitwise
-		flags := !(rec.Flags&sam.Duplicate == sam.Duplicate)
+// 		// Sequencing read SAM flags to exclude from counting, bitwise
+// 		flags := !(rec.Flags&sam.Duplicate == sam.Duplicate)
 
-		// Add 1 to positions that fall within this read
-		overlap := rd.Region.Chromosome == chromosome && readStart <= rd.Region.End && readEnd >= rd.Region.Start
-		if flags && overlap {
-			for pos := range rd.PositionDepth {
-				if readStart <= uint64(pos) && readEnd >= uint64(pos) {
-					rd.PositionDepth[pos]++
-				}
-			}
-		}
+// 		// Add 1 to positions that fall within this read
+// 		overlap := rd.Region.Chromosome == chromosome && readStart <= rd.Region.End && readEnd >= rd.Region.Start
+// 		if flags && overlap {
+// 			for pos := range rd.PositionDepth {
+// 				if readStart <= uint64(pos) && readEnd >= uint64(pos) {
+// 					rd.PositionDepth[pos]++
+// 				}
+// 			}
+// 		}
 
-		// if readStart > 35110 {
-		// 	fmt.Println(rd.Region)
-		// 	fmt.Println(rd)
-		// 	os.Exit(0)
-		// }
-	}
-}
+// 		// if readStart > 35110 {
+// 		// 	fmt.Println(rd.Region)
+// 		// 	fmt.Println(rd)
+// 		// 	os.Exit(0)
+// 		// }
+// 	}
+// }
 
 func initializeRegionDepths() []RegionDepths {
 	regions := db.GetRegions()
@@ -196,19 +195,8 @@ func initializeRegionDepths() []RegionDepths {
 	return regionDepths
 }
 
-func Load(bamPath string) {
-	regions := initializeRegionDepths()
-	// currentRegion, regions := regions[0], regions[1:]
-	// currentRD := initializeRegionDepths()
-
-	bamReader, err := bam.NewReader(bamPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	bamFileID := db.StoreFile(bamReader.Filename, bamReader.SHA256)
-
-	spinner := utils.NewSpinner(fmt.Sprintf("reading %s", bamPath))
+func bamWorker(bamReader *bam.Reader, regions []Region, rChan chan<- Region) {
+	spinner := utils.NewSpinner(fmt.Sprintf("reading %s", bamReader.Path))
 	spinner.Start()
 	defer spinner.StopDuration()
 
@@ -224,31 +212,25 @@ func Load(bamPath string) {
 		readChromosome := rec.Ref.Name()
 		readStart, readEnd := uint64(rec.Pos+1), uint64(rec.End())
 		if readStart%1000 == 0 {
-			spinner.Message(fmt.Sprintf("chromosome %s pos %d", readChromosome, readStart))
+			go spinner.Message(fmt.Sprintf("chromosome %s pos %d Mpb (%.2f%%)", readChromosome, readStart/100000, 100*float64(readStart)/float64(utils.CHROMOSOME_LENGTHS[utils.ChromosomeIndex(readChromosome)-1])))
 		}
 
 		// Sequencing read SAM flags to exclude from counting, bitwise
 		flags := !(rec.Flags&sam.Duplicate == sam.Duplicate)
 
 		if flags {
-			if utils.ChromosomeIndex(regions[0].Region.Chromosome) > utils.ChromosomeIndex(readChromosome) {
+			if utils.ChromosomeIndex(regions[0].Chromosome) > utils.ChromosomeIndex(readChromosome) {
 				continue
 			}
 
 			// Add 1 to positions that fall within this read
 			// (NOTE: iterating regions because >>a read can fall inside in more than 1 region<<)
 			for _, r := range regions {
-				overlap := r.Region.Chromosome == readChromosome && readStart <= r.Region.End && readEnd >= r.Region.Start
+				overlap := r.Chromosome == readChromosome && readStart <= r.End && readEnd >= r.Start
 				if overlap {
-					start, end := max(r.Region.Start, readStart), min(r.Region.End, readEnd)
-					for i := start; i <= end; i++ {
-						if _, ok := r.PositionDepth[Position(i)]; !ok {
-							r.PositionDepth[Position(i)] = 0
-						}
-						r.PositionDepth[Position(i)]++
-					}
+					r.AddDepthFromTo(Position(readStart), Position(readEnd), 1)
 				}
-				if !overlap && (r.Region.Start > readEnd || r.Region.Chromosome != readChromosome) {
+				if !overlap && (r.Start > readEnd || r.Chromosome != readChromosome) {
 					break
 				}
 			}
@@ -262,13 +244,53 @@ func Load(bamPath string) {
 		// pastChromosome := utils.CHROMOSOME_INDEX[readChromosome] > utils.CHROMOSOME_INDEX[regions[0].Region.Chromosome]
 		// if (sameChromosome && pastPosition) || pastChromosome {
 
-		if (readChromosome == regions[0].Region.Chromosome && readStart > regions[0].Region.End) || utils.ChromosomeIndex(readChromosome) > utils.ChromosomeIndex(regions[0].Region.Chromosome) {
-			dbStoreDepthCoverage(bamFileID, regions[0])
+		if (readChromosome == regions[0].Chromosome && readStart > regions[0].End) || utils.ChromosomeIndex(readChromosome) > utils.ChromosomeIndex(regions[0].Chromosome) {
+			rChan <- regions[0]
 			regions = regions[1:]
 		}
-
 	}
 
+	close(rChan)
+}
+
+func GetRegionDepth(bamPath string, chromosome string, start uint64, end uint64) Region {
+	bamReader, err := bam.NewReader(bamPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	region := NewRegion(chromosome, start, end)
+	rChan := make(chan Region)
+	go bamWorker(bamReader, []Region{region}, rChan)
+
+	for range rChan {
+		return region
+	}
+
+	return region
+}
+
+func Load(bamPath string) {
+	bamReader, err := bam.NewReader(bamPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	hash := bamReader.SHA256sum()
+	bamFileID, created := db.StoreFile(bamReader.Filename, hash)
+	if !created {
+		fmt.Printf("File %s (%s) already exists in database\n", bamReader.Path, hash)
+		fmt.Println()
+		fmt.Printf("If you want to load this file again, before run -delete-bam %s\n", hash)
+		return
+	}
+	regions := NewRegionsFromDB()
+	rChan := make(chan Region)
+	go bamWorker(bamReader, regions, rChan)
+
+	for r := range rChan {
+		r.StoreDepthCoverages(bamFileID)
+	}
 }
 
 func prettyPrint(region db.Region, depthCoverages map[int]float64) {

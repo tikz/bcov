@@ -4,9 +4,12 @@ import (
 	"bcov/bed"
 	"bcov/ensembl"
 	"bcov/utils"
+	"fmt"
 	"log"
+	"os"
 	"sort"
 
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -15,28 +18,53 @@ import (
 var DB *gorm.DB
 
 func ConnectDB() {
+	fmt.Println("Database engine:\t", os.Getenv("BCOV_DB_ENGINE"))
+	if os.Getenv("BCOV_DB_ENGINE") == "postgres" {
+		ConnectPostgres()
+	} else {
+		ConnectSQLite()
+	}
+
+	automigrate()
+}
+
+func ConnectPostgres() {
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+		os.Getenv("BCOV_DB_HOST"),
+		os.Getenv("BCOV_DB_USER"),
+		os.Getenv("BCOV_DB_PASSWORD"),
+		os.Getenv("BCOV_DB_NAME"),
+		os.Getenv("BCOV_DB_PORT"))
+
+	var err error
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("failed to connect database")
+	}
+}
+
+func ConnectSQLite() {
 	var err error
 	DB, err = gorm.Open(sqlite.Open("test.db"), &gorm.Config{CreateBatchSize: 100, Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		log.Fatalf("failed to connect database")
 	}
 
-	if res := DB.Exec("PRAGMA synchronous = OFF", nil); res.Error != nil {
+	if res := DB.Exec("PRAGMA synchronous = OFF; PRAGMA foreign_keys = ON;", nil); res.Error != nil {
 		panic(res.Error)
 	}
-
-	automigrate()
 }
 
-func StoreFile(file string, hash string) (bamFileID uint) {
+func StoreFile(file string, hash string) (bamFileID uint, created bool) {
 	var bamFileDB BAMFile
 	result := DB.First(&bamFileDB, "sha256_sum = ?", hash)
 	if result.RowsAffected == 0 {
 		bamFileDB = BAMFile{Name: file, SHA256Sum: hash}
 		DB.Create(&bamFileDB)
+		created = true
 	}
 
-	return bamFileDB.ID
+	return bamFileDB.ID, created
 }
 
 func StoreRegion(region *bed.Region) (regionID uint) {
