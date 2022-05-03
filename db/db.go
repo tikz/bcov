@@ -55,11 +55,11 @@ func ConnectSQLite() {
 	}
 }
 
-func StoreFile(file string, hash string) (bamFileID uint, created bool) {
+func StoreFile(file string, hash string, kitID uint) (bamFileID uint, created bool) {
 	var bamFileDB BAMFile
 	result := DB.First(&bamFileDB, "sha256_sum = ?", hash)
 	if result.RowsAffected == 0 {
-		bamFileDB = BAMFile{Name: file, SHA256Sum: hash}
+		bamFileDB = BAMFile{Name: file, SHA256Sum: hash, KitID: kitID}
 		DB.Create(&bamFileDB)
 		created = true
 	}
@@ -119,4 +119,16 @@ func GetRegions() []Region {
 	})
 
 	return regions
+}
+
+func StoreKit(name string) (kitID uint, created bool) {
+	var kitDB Kit
+	result := DB.Where("d = ?", kitID).First(&kitDB)
+	if result.RowsAffected == 0 {
+		created = true
+		kitDB = Kit{Name: name}
+		DB.Create(&kitDB)
+	}
+
+	return kitDB.ID, created
 }

@@ -3,10 +3,17 @@ package db
 type Depth uint8
 type Coverage float64
 
+type Kit struct {
+	ID       uint `gorm:"primarykey"`
+	Name     string
+	BAMFiles []BAMFile
+}
+
 type BAMFile struct {
 	ID                   uint   `gorm:"primarykey"`
 	SHA256Sum            string `gorm:"uniqueIndex"`
 	Name                 string
+	KitID                uint
 	RegionDepthCoverages []RegionDepthCoverage `gorm:"constraint:OnDelete:CASCADE;"`
 }
 
@@ -42,5 +49,5 @@ type DepthCoverage struct {
 }
 
 func automigrate() {
-	DB.AutoMigrate(&BAMFile{}, &Gene{}, &Region{}, &DepthCoverage{})
+	DB.AutoMigrate(&Kit{}, &BAMFile{}, &Gene{}, &Region{}, &DepthCoverage{})
 }

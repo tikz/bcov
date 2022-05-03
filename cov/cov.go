@@ -71,7 +71,32 @@ func bamWorker(bamReader *bam.Reader, regions []Region, rChan chan<- Region) {
 	close(rChan)
 }
 
-func GetRegionDepth(bamPath string, chromosome string, start uint64, end uint64) Region {
+func Load(bamPath string, kit string) {
+	bamReader, err := bam.NewReader(bamPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	hash := bamReader.SHA256sum()
+
+	kitID, _ := db.StoreKit(kit)
+	bamFileID, created := db.StoreFile(bamReader.Filename, hash, kitID)
+	if !created {
+		fmt.Printf("File %s (%s) already exists in database\n", bamReader.Path, hash)
+		fmt.Println()
+		fmt.Printf("If you want to load this file again, run -delete-bam %s\n", hash)
+		return
+	}
+	regions := NewRegionsFromDB()
+	rChan := make(chan Region)
+	go bamWorker(bamReader, regions, rChan)
+
+	for r := range rChan {
+		r.StoreDepthCoverages(bamFileID)
+	}
+}
+
+func RegionDepth(bamPath string, chromosome string, start uint64, end uint64) Region {
 	bamReader, err := bam.NewReader(bamPath)
 	if err != nil {
 		log.Fatal(err)
@@ -86,29 +111,6 @@ func GetRegionDepth(bamPath string, chromosome string, start uint64, end uint64)
 	}
 
 	return region
-}
-
-func Load(bamPath string) {
-	bamReader, err := bam.NewReader(bamPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	hash := bamReader.SHA256sum()
-	bamFileID, created := db.StoreFile(bamReader.Filename, hash)
-	if !created {
-		fmt.Printf("File %s (%s) already exists in database\n", bamReader.Path, hash)
-		fmt.Println()
-		fmt.Printf("If you want to load this file again, run -delete-bam %s\n", hash)
-		return
-	}
-	regions := NewRegionsFromDB()
-	rChan := make(chan Region)
-	go bamWorker(bamReader, regions, rChan)
-
-	for r := range rChan {
-		r.StoreDepthCoverages(bamFileID)
-	}
 }
 
 func prettyPrint(region db.Region, depthCoverages map[int]float64) {

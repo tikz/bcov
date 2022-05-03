@@ -92,7 +92,7 @@ func (r *Region) ComputeDepthCoverageRange(fromDepth Depth, toDepth Depth) {
 
 // StoreDepthCoverages computes and stores the depth coverages in the DB, under the given BAM file ID.
 func (r *Region) StoreDepthCoverages(bamFileID uint) {
-	r.ComputeDepthCoverageRange(1, 100)
+	r.ComputeDepthCoverageRange(10, 100)
 	var depthCoverages []db.DepthCoverage
 
 	for depth, coverage := range r.DepthCoverages {

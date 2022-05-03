@@ -50,7 +50,7 @@ func cliRegion() {
 		log.Fatal(err)
 	}
 
-	region := cov.GetRegionDepth(*bam, chromosome, start, end)
+	region := cov.RegionDepth(*bam, chromosome, start, end)
 	fmt.Println("CHROMOSOME:POSITION \t DEPTH")
 	for i := start; i < end; i++ {
 		fmt.Printf("%s:%d \t\t\t %d\n", chromosome, i, region.PositionDepth[cov.Position(i)])
@@ -112,7 +112,12 @@ func cliLoadBAM() {
 		os.Exit(1)
 	}
 
-	cov.Load(*bam)
+	if *kit == "" {
+		fmt.Println(`Capture kit name not specified for this bam, add -kit "name"`)
+		os.Exit(1)
+	}
+
+	cov.Load(*bam, *kit)
 }
 
 func cliDeleteBam() {

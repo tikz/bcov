@@ -14,6 +14,7 @@ var (
 	fetchRegions = flag.Bool("fetch-regions", false, "Fetch regions from Ensembl and store in DB")
 	web          = flag.Bool("web", false, "Run web server")
 	bam          = flag.String("bam", "", "Load a BAM file into the database")
+	kit          = flag.String("kit", "", "Capture kit name")
 	deleteBam    = flag.String("delete-bam", "", "Delete BAM file from the database with SHA256")
 	region       = flag.String("region", "", "Print per position depth of a given range, expressed as <chromosome>:<start>-<end>")
 	help         = flag.Bool("help", false, "Display help")
