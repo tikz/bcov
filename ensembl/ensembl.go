@@ -6,12 +6,14 @@ import (
 )
 
 type Region struct {
-	Chromosome string `db:"chrom"`
-	Start      uint64 `db:"start"`
-	End        uint64 `db:"end"`
-	GeneName   string `db:"gene_name"`
-	ExonNumber uint   `db:"exon_number"`
-	StableID   string `db:"stable_id"`
+	Chromosome      string `db:"chrom"`
+	Start           uint64 `db:"start"`
+	End             uint64 `db:"end"`
+	GeneHGNC        string `db:"gene_hgnc"`
+	GeneName        string `db:"gene_name"`
+	GeneDescription string `db:"gene_description"`
+	ExonNumber      uint   `db:"exon_number"`
+	StableID        string `db:"stable_id"`
 }
 
 func Connect() (*sqlx.DB, error) {
@@ -29,7 +31,9 @@ func GetExons(db *sqlx.DB) ([]Region, error) {
 		seq_region.name AS chrom,
 		exon.seq_region_start AS start,
 		exon.seq_region_end AS end,
+		gene_names.display_label AS gene_hgnc,
 		gene_names.display_label AS gene_name,
+		gene_names.display_label AS gene_description,
 		exon_transcript.rank AS exon_number,
 		gene.stable_id as stable_id
 		FROM gene

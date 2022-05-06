@@ -19,10 +19,12 @@ type BAMFile struct {
 }
 
 type Gene struct {
-	ID        uint   `gorm:"primarykey"`
-	Name      string `gorm:"index"`
-	EnsemblID string `gorm:"index"`
-	Regions   []Region
+	ID          uint `gorm:"primarykey"`
+	HGNC        string
+	Name        string `gorm:"index"`
+	Description string
+	EnsemblID   string `gorm:"index"`
+	Regions     []Region
 }
 
 type Region struct {
