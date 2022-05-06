@@ -55,11 +55,11 @@ func ConnectSQLite() {
 	}
 }
 
-func StoreFile(file string, hash string, kitID uint) (bamFileID uint, created bool) {
+func StoreFile(file string, hash string, kitID uint, size int64) (bamFileID uint, created bool) {
 	var bamFileDB BAMFile
 	result := DB.First(&bamFileDB, "sha256_sum = ?", hash)
 	if result.RowsAffected == 0 {
-		bamFileDB = BAMFile{Name: file, SHA256Sum: hash, KitID: kitID}
+		bamFileDB = BAMFile{Name: file, SHA256Sum: hash, KitID: kitID, Size: uint64(size)}
 		DB.Create(&bamFileDB)
 		created = true
 	}

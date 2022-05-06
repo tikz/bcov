@@ -12,6 +12,7 @@ type Kit struct {
 type BAMFile struct {
 	ID                   uint   `gorm:"primarykey"`
 	SHA256Sum            string `gorm:"uniqueIndex"`
+	Size                 uint64
 	Name                 string
 	KitID                uint
 	RegionDepthCoverages []RegionDepthCoverage `gorm:"constraint:OnDelete:CASCADE;"`
