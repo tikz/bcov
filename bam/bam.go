@@ -16,11 +16,18 @@ import (
 type Reader struct {
 	Path     string
 	Filename string
+	Size     int64
 	reader   *bam.Reader
 }
 
 func NewReader(path string) (*Reader, error) {
 	reader := &Reader{Path: path, Filename: filepath.Base(path)}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		return nil, errors.New(fmt.Sprint("could not stat file:", err))
+	}
+	reader.Size = fi.Size()
 
 	var r io.Reader
 	if path == "" {

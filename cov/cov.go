@@ -80,7 +80,7 @@ func Load(bamPath string, kit string) {
 	hash := bamReader.SHA256sum()
 
 	kitID, _ := db.StoreKit(kit)
-	bamFileID, created := db.StoreFile(bamReader.Filename, hash, kitID)
+	bamFileID, created := db.StoreFile(bamReader.Filename, hash, kitID, bamReader.Size)
 	if !created {
 		fmt.Printf("File %s (%s) already exists in database\n", bamReader.Path, hash)
 		fmt.Println()

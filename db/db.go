@@ -55,11 +55,11 @@ func ConnectSQLite() {
 	}
 }
 
-func StoreFile(file string, hash string, kitID uint) (bamFileID uint, created bool) {
+func StoreFile(file string, hash string, kitID uint, size int64) (bamFileID uint, created bool) {
 	var bamFileDB BAMFile
 	result := DB.First(&bamFileDB, "sha256_sum = ?", hash)
 	if result.RowsAffected == 0 {
-		bamFileDB = BAMFile{Name: file, SHA256Sum: hash, KitID: kitID}
+		bamFileDB = BAMFile{Name: file, SHA256Sum: hash, KitID: kitID, Size: uint64(size)}
 		DB.Create(&bamFileDB)
 		created = true
 	}
@@ -78,12 +78,12 @@ func StoreRegion(region *bed.Region) (regionID uint) {
 	return regionDB.ID
 }
 
-func StoreGene(name string, ensemblID string) (geneID uint, created bool) {
+func StoreGene(accession string, name string, description string, ensemblID string) (geneID uint, created bool) {
 	var geneDB Gene
 	result := DB.Where("ensembl_id = ?", ensemblID).First(&geneDB)
 	if result.RowsAffected == 0 {
 		created = true
-		geneDB = Gene{Name: name, EnsemblID: ensemblID}
+		geneDB = Gene{Accession: accession, Name: name, Description: description, EnsemblID: ensemblID}
 		DB.Create(&geneDB)
 	}
 

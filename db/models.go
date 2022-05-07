@@ -10,19 +10,21 @@ type Kit struct {
 }
 
 type BAMFile struct {
-	ID                   uint                  `gorm:"primarykey" json:"id"`
-	SHA256Sum            string                `gorm:"uniqueIndex" json:"sha256"`
-	Name                 string                `json:"name"`
-	KitID                uint                  `json:"-"`
-	Kit                  Kit                   `json:"kit"`
-	RegionDepthCoverages []RegionDepthCoverage `gorm:"constraint:OnDelete:CASCADE;" json:"-"`
+	ID                   uint   `gorm:"primarykey"`
+	SHA256Sum            string `gorm:"uniqueIndex"`
+	Size                 uint64
+	Name                 string
+	KitID                uint
+	RegionDepthCoverages []RegionDepthCoverage `gorm:"constraint:OnDelete:CASCADE;"`
 }
 
 type Gene struct {
-	ID        uint     `gorm:"primarykey" json:"id"`
-	Name      string   `gorm:"index" json:"name"`
-	EnsemblID string   `gorm:"index" json:"ensemblId"`
-	Regions   []Region `json:"regions"`
+	ID          uint `gorm:"primarykey"`
+	Accession   string
+	Name        string `gorm:"index"`
+	Description string
+	EnsemblID   string `gorm:"index"`
+	Regions     []Region
 }
 
 type Region struct {
