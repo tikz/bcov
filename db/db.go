@@ -78,12 +78,12 @@ func StoreRegion(region *bed.Region) (regionID uint) {
 	return regionDB.ID
 }
 
-func StoreGene(hgnc string, name string, description string, ensemblID string) (geneID uint, created bool) {
+func StoreGene(accession string, name string, description string, ensemblID string) (geneID uint, created bool) {
 	var geneDB Gene
 	result := DB.Where("ensembl_id = ?", ensemblID).First(&geneDB)
 	if result.RowsAffected == 0 {
 		created = true
-		geneDB = Gene{HGNC: hgnc, Name: name, Description: description, EnsemblID: ensemblID}
+		geneDB = Gene{Accession: accession, Name: name, Description: description, EnsemblID: ensemblID}
 		DB.Create(&geneDB)
 	}
 

@@ -91,7 +91,7 @@ func cliFetchRegions() {
 	exonCount := 0
 	for geneName, exons := range geneExons {
 		spinner.Message(fmt.Sprintf("%s: %d exons", geneName, len(exons)))
-		geneID, created := db.StoreGene(geneName, exons[0].StableID)
+		geneID, created := db.StoreGene(exons[0].GeneAccession, geneName, exons[0].GeneDescription, exons[0].StableID)
 		if created {
 			db.StoreRegions(geneID, exons)
 		}

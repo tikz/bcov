@@ -9,7 +9,7 @@ type Region struct {
 	Chromosome      string `db:"chrom"`
 	Start           uint64 `db:"start"`
 	End             uint64 `db:"end"`
-	GeneHGNC        string `db:"gene_hgnc"`
+	GeneAccession   string `db:"gene_accession"`
 	GeneName        string `db:"gene_name"`
 	GeneDescription string `db:"gene_description"`
 	ExonNumber      uint   `db:"exon_number"`
@@ -31,11 +31,11 @@ func GetExons(db *sqlx.DB) ([]Region, error) {
 		seq_region.name AS chrom,
 		exon.seq_region_start AS start,
 		exon.seq_region_end AS end,
-		gene_names.dbprimary_acc AS gene_hgnc,
+		gene_names.dbprimary_acc AS gene_accession,
 		gene_names.display_label AS gene_name,
 		gene_names.description AS gene_description,
 		exon_transcript.rank AS exon_number,
-		gene.stable_id as stable_id,
+		gene.stable_id as stable_id
 		FROM gene
 		
 		JOIN transcript ON transcript.transcript_id = gene.canonical_transcript_id
@@ -59,12 +59,6 @@ func GetExons(db *sqlx.DB) ([]Region, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// for _, region := range regions {
-	// 	fmt.Printf("%#v\n", region)
-	// }
-	// fmt.Println(len(regions))
-	// fmt.Println(err)
 
 	return regions, nil
 }
