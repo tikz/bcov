@@ -62,6 +62,11 @@ func main() {
 		os.Exit(0)
 	}
 
+	if *web {
+		runWebServer()
+		os.Exit(0)
+	}
+
 	fmt.Println("Usage:")
 	flag.PrintDefaults()
 }

@@ -4,48 +4,50 @@ type Depth uint8
 type Coverage float64
 
 type Kit struct {
-	ID       uint `gorm:"primarykey"`
-	Name     string
-	BAMFiles []BAMFile
+	ID       uint      `gorm:"primarykey" json:"id"`
+	Name     string    `json:"name"`
+	BAMFiles []BAMFile `json:"-"`
 }
 
 type BAMFile struct {
-	ID                   uint   `gorm:"primarykey"`
-	SHA256Sum            string `gorm:"uniqueIndex"`
-	Name                 string
-	KitID                uint
-	RegionDepthCoverages []RegionDepthCoverage `gorm:"constraint:OnDelete:CASCADE;"`
+	ID                   uint                  `gorm:"primarykey" json:"id"`
+	SHA256Sum            string                `gorm:"uniqueIndex" json:"sha256"`
+	Name                 string                `json:"name"`
+	KitID                uint                  `json:"-"`
+	Kit                  Kit                   `json:"kit"`
+	RegionDepthCoverages []RegionDepthCoverage `gorm:"constraint:OnDelete:CASCADE;" json:"-"`
 }
 
 type Gene struct {
-	ID        uint   `gorm:"primarykey"`
-	Name      string `gorm:"index"`
-	EnsemblID string `gorm:"index"`
-	Regions   []Region
+	ID        uint     `gorm:"primarykey" json:"id"`
+	Name      string   `gorm:"index" json:"name"`
+	EnsemblID string   `gorm:"index" json:"ensemblId"`
+	Regions   []Region `json:"regions"`
 }
 
 type Region struct {
-	ID                   uint `gorm:"primarykey"`
-	GeneID               uint
-	Chromosome           string `gorm:"index"`
-	Start                uint64 `gorm:"index"`
-	End                  uint64
-	ExonNumber           uint
-	RegionDepthCoverages []RegionDepthCoverage
+	ID                   uint                  `gorm:"primarykey" json:"id"`
+	GeneID               uint                  `json:"-"`
+	Chromosome           string                `gorm:"index" json:"chromosome"`
+	Start                uint64                `gorm:"index" json:"start"`
+	End                  uint64                `json:"end"`
+	ExonNumber           uint                  `json:"exonNumber"`
+	RegionDepthCoverages []RegionDepthCoverage `json:"-"`
 }
 
 type RegionDepthCoverage struct {
-	ID             uint            `gorm:"primarykey"`
-	RegionID       uint            `gorm:"index"`
-	BAMFileID      uint            `gorm:"index"`
-	DepthCoverages []DepthCoverage `gorm:"constraint:OnDelete:CASCADE;"`
+	ID             uint            `gorm:"primarykey" json:"-"`
+	RegionID       uint            `gorm:"index" json:"-"`
+	BAMFileID      uint            `gorm:"index" json:"-"`
+	BAMFile        BAMFile         `json:"bamFile"`
+	DepthCoverages []DepthCoverage `gorm:"constraint:OnDelete:CASCADE;" json:"depthCoverages"`
 }
 
 type DepthCoverage struct {
-	ID                    uint `gorm:"primarykey"`
-	RegionDepthCoverageID uint `gorm:"index"`
-	Depth                 uint8
-	Coverage              uint8
+	ID                    uint  `gorm:"primarykey" json:"-"`
+	RegionDepthCoverageID uint  `gorm:"index" json:"-"`
+	Depth                 uint8 `json:"depth"`
+	Coverage              uint8 `json:"coverage"`
 }
 
 func automigrate() {
