@@ -1,20 +1,12 @@
-import React from "react";
 // import logo from "./logo.svg";
-import GitHubIcon from "@mui/icons-material/GitHub";
 import AlternateEmailIcon from "@mui/icons-material/AlternateEmail";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import { Container, CssBaseline, Grid, Typography } from "@mui/material";
 import "./App.css";
 import logo from "./assets/b.svg";
-import {
-  Button,
-  Container,
-  CssBaseline,
-  Grid,
-  TextField,
-  Typography,
-} from "@mui/material";
 import Search from "./components/Search";
 
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Splash from "./components/Splash";
 
 const darkTheme = createTheme({
@@ -74,26 +66,7 @@ function App() {
                 </Grid>
               </Grid>
               <Grid item>
-                <Grid container alignItems="center" spacing={1}>
-                  <Grid item>
-                    <TextField
-                      fullWidth
-                      id="outlined-basic"
-                      label="Filter by gene name, Ensembl accession, or capture kit name"
-                      variant="outlined"
-                      sx={{ width: 500 }}
-                    />
-                  </Grid>
-                  <Grid item>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      sx={{ height: 56 }}
-                    >
-                      See coverages
-                    </Button>
-                  </Grid>
-                </Grid>
+                <Search />
               </Grid>
             </Grid>
           </Container>

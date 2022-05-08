@@ -1,5 +1,5 @@
-import SineWaves from "sine-waves";
 import React, { useRef } from "react";
+import SineWaves from "sine-waves";
 
 export default function Splash() {
   const wavesContainerMiddle = useRef();
