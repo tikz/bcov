@@ -11,18 +11,26 @@ import { createFilterOptions } from "@mui/material/Autocomplete";
 import React from "react";
 const stc = require("string-to-color");
 
+interface Gene {
+  id: number;
+  name: string;
+  access: string;
+  description: string;
+  ensemblId: string;
+}
+
 export default function Search() {
-  const [value, setValue] = React.useState(null);
-  const [inputValue, setInputValue] = React.useState("");
-  const [searchOptions, setSearchOptions] = React.useState([]);
-  const [inProgress, setInProgress] = React.useState(false);
+  const [value, setValue] = React.useState<(Gene | string)[]>([]);
+  const [inputValue, setInputValue] = React.useState<string>("");
+  const [searchOptions, setSearchOptions] = React.useState<Gene[]>([]);
+  const [inProgress, setInProgress] = React.useState<Boolean>(false);
 
   React.useEffect(() => {
     if (inputValue.length < 3) {
       setSearchOptions([]);
     } else {
       setInProgress(true);
-      fetch("http://localhost:8080/api/search/genes/" + inputValue)
+      fetch("/api/search/genes/" + inputValue)
         .then((response) => response.json())
         .then((data) => {
           setSearchOptions(!("error" in data) ? data : []);
@@ -33,7 +41,7 @@ export default function Search() {
 
   const filterOptions = createFilterOptions({
     matchFrom: "any",
-    stringify: (option) => option.name + option.description,
+    stringify: (option: Gene) => option.name + option.description,
   });
 
   return (
@@ -54,11 +62,10 @@ export default function Search() {
           onInputChange={(event, newInputValue) => {
             setInputValue(newInputValue);
           }}
-          onChange={(event, newValue) => {
+          onChange={(event, newValue: (string | Gene)[]) => {
             setSearchOptions([]);
             setInputValue("");
             setValue(newValue);
-            console.log("changed", newValue);
           }}
           renderTags={(value, getTagProps) =>
             value.map((option, index) => (
@@ -78,8 +85,10 @@ export default function Search() {
               sx={{ width: 500 }}
             />
           )}
-          getOptionLabel={(option) => option.name}
-          renderOption={(props, option, { inputValue }) => {
+          getOptionLabel={(option: Gene | string) =>
+            typeof option === "string" ? option : option.name
+          }
+          renderOption={(props, option: Gene, { inputValue }) => {
             return (
               <li {...props}>
                 <Grid
