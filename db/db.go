@@ -18,11 +18,12 @@ import (
 var DB *gorm.DB
 
 func ConnectDB() {
-	fmt.Println("Database engine:\t", os.Getenv("BCOV_DB_ENGINE"))
 	if os.Getenv("BCOV_DB_ENGINE") == "postgres" {
 		ConnectPostgres()
+		fmt.Println("Database engine:\t", "postgres")
 	} else {
 		ConnectSQLite()
+		fmt.Println("Database engine:\t", "sqlite")
 	}
 
 	automigrate()
@@ -123,7 +124,7 @@ func GetRegions() []Region {
 
 func StoreKit(name string) (kitID uint, created bool) {
 	var kitDB Kit
-	result := DB.Where("d = ?", kitID).First(&kitDB)
+	result := DB.Where("name = ?", name).First(&kitDB)
 	if result.RowsAffected == 0 {
 		created = true
 		kitDB = Kit{Name: name}
