@@ -1,28 +1,55 @@
-import { Autocomplete, Button, Chip, Grid, TextField } from "@mui/material";
+import {
+  Autocomplete,
+  Button,
+  Chip,
+  CircularProgress,
+  Grid,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { createFilterOptions } from "@mui/material/Autocomplete";
 import React from "react";
+const stc = require("string-to-color");
 
 export default function Search() {
+  const [value, setValue] = React.useState(null);
   const [inputValue, setInputValue] = React.useState("");
   const [searchOptions, setSearchOptions] = React.useState([]);
+  const [inProgress, setInProgress] = React.useState(false);
 
   React.useEffect(() => {
-    if (inputValue.length > 2) {
+    if (inputValue.length < 3) {
+      setSearchOptions([]);
+    } else {
+      setInProgress(true);
       fetch("http://localhost:8080/api/search/genes/" + inputValue)
         .then((response) => response.json())
         .then((data) => {
           setSearchOptions(!("error" in data) ? data : []);
+          setInProgress(false);
         });
     }
   }, [inputValue]);
 
+  const filterOptions = createFilterOptions({
+    matchFrom: "any",
+    stringify: (option) => option.name + option.description,
+  });
+
   return (
     <Grid container alignItems="center" spacing={1}>
+      <Grid item sx={{ width: 48 }}>
+        {inProgress && <CircularProgress />}
+      </Grid>
       <Grid item>
         <Autocomplete
           multiple
           id="search"
-          options={searchOptions.map((option) => option.name)}
+          filterOptions={filterOptions}
+          options={searchOptions.map((option) => option)}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
           freeSolo
+          filterSelectedOptions
           inputValue={inputValue}
           onInputChange={(event, newInputValue) => {
             setInputValue(newInputValue);
@@ -30,12 +57,15 @@ export default function Search() {
           onChange={(event, newValue) => {
             setSearchOptions([]);
             setInputValue("");
+            setValue(newValue);
+            console.log("changed", newValue);
           }}
           renderTags={(value, getTagProps) =>
             value.map((option, index) => (
               <Chip
                 variant="outlined"
-                label={option}
+                label={option.name}
+                sx={{ backgroundColor: stc(option.name) + 33 }}
                 {...getTagProps({ index })}
               />
             ))
@@ -48,10 +78,48 @@ export default function Search() {
               sx={{ width: 500 }}
             />
           )}
+          getOptionLabel={(option) => option.name}
+          renderOption={(props, option, { inputValue }) => {
+            return (
+              <li {...props}>
+                <Grid
+                  container
+                  alignItems="center"
+                  justifyContent="space-between"
+                  spacing={1}
+                >
+                  <Grid item>
+                    <Chip
+                      variant="outlined"
+                      label={option.name}
+                      sx={{
+                        backgroundColor: stc(option.name) + 33,
+                        cursor: "pointer",
+                      }}
+                    />
+                  </Grid>
+                  <Grid item>
+                    <Typography
+                      variant="caption"
+                      color="textSecondary"
+                      sx={{ fontSize: 10 }}
+                    >
+                      {option.description}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </li>
+            );
+          }}
         />
       </Grid>
       <Grid item>
-        <Button variant="contained" color="primary" sx={{ height: 56 }}>
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{ height: 56 }}
+          disabled={value.length === 0}
+        >
           See coverages
         </Button>
       </Grid>

@@ -4,6 +4,8 @@ import (
 	"bcov/db"
 	"fmt"
 	"net/http"
+	"sort"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -41,6 +43,16 @@ func SearchGenesEndpoint(c *gin.Context) {
 	var genes []db.Gene
 	search := fmt.Sprintf("%%%s%%", name)
 	result := db.DB.Where("name LIKE ? OR description LIKE ?", search, search).Find(&genes)
+
+	// Prioritize sorting first by gene name, then by description
+	nameUpper := strings.ToUpper(name)
+	sort.SliceStable(genes, func(i, j int) bool {
+		return strings.Index(genes[i].Name, nameUpper) > strings.Index(genes[j].Name, nameUpper)
+	})
+	if len(genes) > 5 {
+		genes = genes[:5]
+	}
+
 	if result.RowsAffected > 0 {
 		c.JSON(http.StatusOK, genes)
 	} else {

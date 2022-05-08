@@ -9,7 +9,7 @@ import Search from "./components/Search";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Splash from "./components/Splash";
 
-const darkTheme = createTheme({
+const theme = createTheme({
   palette: {
     mode: "dark",
     primary: {
@@ -18,12 +18,16 @@ const darkTheme = createTheme({
     secondary: {
       main: "#8c92a4",
     },
+    background: {
+      default: "#252525",
+      paper: "#2b2b2d",
+    },
   },
 });
 
 function App() {
   return (
-    <ThemeProvider theme={darkTheme}>
+    <ThemeProvider theme={theme}>
       <CssBaseline />
       <Splash />
       <div className="App">
