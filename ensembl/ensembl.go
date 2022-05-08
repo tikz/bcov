@@ -17,7 +17,7 @@ type Region struct {
 }
 
 func Connect() (*sqlx.DB, error) {
-	db, err := sqlx.Connect("mysql", "anonymous@(ensembldb.ensembl.org:3306)/homo_sapiens_core_98_38")
+	db, err := sqlx.Connect("mysql", "anonymous@(ensembldb.ensembl.org:3306)/homo_sapiens_core_75_37")
 	if err != nil {
 		return nil, err
 	}

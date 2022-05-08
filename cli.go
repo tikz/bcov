@@ -5,7 +5,9 @@ import (
 	"bcov/db"
 	"bcov/ensembl"
 	"bcov/utils"
+	"encoding/csv"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -101,9 +103,7 @@ func cliFetchRegions() {
 	spinner.Stop(fmt.Sprintf("%d exons in %d genes", exonCount, len(geneExons)))
 }
 
-func cliLoadBAM() {
-	db.ConnectDB()
-
+func checkRegionsDB() {
 	var count int64
 	db.DB.Model(&db.Region{}).Count(&count)
 
@@ -112,12 +112,44 @@ func cliLoadBAM() {
 		os.Exit(1)
 	}
 
+}
+
+func cliLoadBAM() {
+	db.ConnectDB()
+	checkRegionsDB()
+
 	if *kit == "" {
 		fmt.Println(`Capture kit name not specified for this bam, add -kit "name"`)
 		os.Exit(1)
 	}
 
 	cov.Load(*bam, *kit)
+}
+
+func cliLoadBAMs() {
+	db.ConnectDB()
+	checkRegionsDB()
+
+	f, err := os.Open(*bams)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer f.Close()
+
+	csvReader := csv.NewReader(f)
+	for {
+		row, err := csvReader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		path, kitName := strings.TrimSpace(row[0]), strings.TrimSpace(row[1])
+		cov.Load(path, kitName)
+	}
 }
 
 func cliDeleteBam() {

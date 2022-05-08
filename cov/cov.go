@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"strings"
 
 	"github.com/biogo/hts/sam"
 	"github.com/fatih/color"
@@ -26,10 +27,13 @@ func bamWorker(bamReader *bam.Reader, regions []Region, rChan chan<- Region) {
 			log.Fatalf("error reading bam: %v", err)
 		}
 
-		readChromosome := rec.Ref.Name()
+		readChromosome := strings.ReplaceAll(rec.Ref.Name(), "chr", "")
 		readStart, readEnd := uint64(rec.Pos+1), uint64(rec.End())
 		if readStart%1000 == 0 {
-			go spinner.Message(fmt.Sprintf("chromosome %s pos %d Mpb (%.2f%%)", readChromosome, readStart/100000, 100*float64(readStart)/float64(utils.CHROMOSOME_LENGTHS[utils.ChromosomeIndex(readChromosome)-1])))
+			chromosomeIndex := utils.ChromosomeIndex(readChromosome)
+			if chromosomeIndex != 99 {
+				go spinner.Message(fmt.Sprintf("chromosome %s pos %d Mpb (%.2f%%)", readChromosome, readStart/100000, 100*float64(readStart)/float64(utils.CHROMOSOME_LENGTHS[chromosomeIndex-1])))
+			}
 		}
 
 		// SAM flags to exclude
@@ -93,6 +97,7 @@ func Load(bamPath string, kit string) {
 
 	for r := range rChan {
 		r.StoreDepthCoverages(bamFileID)
+		r.StoreReadCounts(bamFileID)
 	}
 }
 

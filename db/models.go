@@ -37,6 +37,21 @@ type Region struct {
 	RegionDepthCoverages []RegionDepthCoverage `json:"-"`
 }
 
+type RegionReadCount struct {
+	ID         uint        `gorm:"primarykey" json:"-"`
+	RegionID   uint        `gorm:"index" json:"-"`
+	BAMFileID  uint        `gorm:"index" json:"-"`
+	BAMFile    BAMFile     `json:"bamFile"`
+	ReadCounts []ReadCount `gorm:"constraint:OnDelete:CASCADE;" json:"readCounts"`
+}
+
+type ReadCount struct {
+	ID                uint   `gorm:"primarykey" json:"-"`
+	RegionReadCountID uint   `gorm:"index" json:"-"`
+	Position          uint64 `json:"depth"`
+	Count             uint64 `json:"coverage"`
+}
+
 type RegionDepthCoverage struct {
 	ID             uint            `gorm:"primarykey" json:"-"`
 	RegionID       uint            `gorm:"index" json:"-"`
@@ -53,5 +68,5 @@ type DepthCoverage struct {
 }
 
 func automigrate() {
-	DB.AutoMigrate(&Kit{}, &BAMFile{}, &Gene{}, &Region{}, &DepthCoverage{})
+	DB.AutoMigrate(&Kit{}, &BAMFile{}, &Gene{}, &Region{}, &RegionReadCount{}, &ReadCount{}, &RegionDepthCoverage{}, &DepthCoverage{})
 }

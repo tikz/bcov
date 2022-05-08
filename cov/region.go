@@ -109,6 +109,24 @@ func (r *Region) StoreDepthCoverages(bamFileID uint) {
 	})
 }
 
+// StoreReadCounts stores the read counts in the DB, under the given BAM file ID.
+func (r *Region) StoreReadCounts(bamFileID uint) {
+
+	var readCounts []db.ReadCount
+
+	for position, depth := range r.PositionDepth {
+		if position%10 == 0 {
+			readCounts = append(readCounts, db.ReadCount{Position: uint64(position), Count: uint64(depth)})
+		}
+	}
+
+	db.DB.Create(&db.RegionReadCount{
+		RegionID:   r.ID,
+		BAMFileID:  bamFileID,
+		ReadCounts: readCounts,
+	})
+}
+
 func max(a uint64, b uint64) uint64 {
 	if a > b {
 		return a
