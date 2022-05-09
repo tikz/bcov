@@ -6,6 +6,7 @@ require (
 	github.com/biogo/hts v1.4.3
 	github.com/fatih/color v1.13.0
 	github.com/gin-contrib/cors v1.3.1
+	github.com/gin-contrib/static v0.0.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/jmoiron/sqlx v1.3.5

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
 
@@ -112,6 +113,8 @@ func runWebServer() {
 	r := gin.Default()
 	r.Use(cors.Default())
 
+	r.Use(static.Serve("/", static.LocalFile("web/build", true)))
+
 	r.GET("/api/kits", KitsEndpoint)
 	r.GET("/api/gene/:name", GeneEndpoint)
 
@@ -119,15 +122,8 @@ func runWebServer() {
 	r.GET("/api/search/kits/:name", SearchKitsEndpoint)
 	r.GET("/api/depth-coverages/kit/:kitID/region/:regionID", DepthCoveragesEndpoint)
 
-	// r.NoRoute(func(c *gin.Context) {
-	// 	if !strings.HasPrefix(c.Request.RequestURI, "/auth") && !strings.HasPrefix(c.Request.RequestURI, "/admin") && !strings.HasSuffix(c.Request.RequestURI, ".map") {
-	// 		filePath := "web/dist" + c.Request.RequestURI
-	// 		if _, err := os.Stat(filePath); err == nil {
-	// 			c.File(filePath)
-	// 		} else {
-	// 			c.File("web/dist/index.html")
-	// 		}
-	// 	}
-	// })
+	r.NoRoute(func(c *gin.Context) {
+		c.File("web/build/index.html")
+	})
 	r.Run()
 }
