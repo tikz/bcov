@@ -34,7 +34,7 @@ const width = () =>
 
 const height = 300;
 
-export default function Splash() {
+export default () => {
   const containerWavesFront = React.useRef<HTMLCanvasElement>(null);
   const containerWavesBlur = React.useRef<HTMLCanvasElement>(null);
 

@@ -18,6 +18,7 @@
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-scripts": "5.0.1",
+    "sass": "^1.51.0",
     "sine-waves": "^0.3.0",
     "string-to-color": "^2.2.2",
     "typescript": "^4.6.4",
@@ -33,7 +34,10 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "import/no-anonymous-default-export": "off"
+    }
   },
   "browserslist": {
     "production": [

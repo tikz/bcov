@@ -1,0 +1,49 @@
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeinscale {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeinscaleX {
+  0% {
+    opacity: 1;
+    transform: translateX(-100px);
+    background: $primary;
+    box-shadow: 0 0 20px $primary;
+  }
+  25% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+    background: $primary;
+    box-shadow: 0 0 20px $primary;
+  }
+  75% {
+    opacity: 0;
+    box-shadow: 0 0 20px #fff;
+  }
+  82% {
+    opacity: 1;
+    box-shadow: 0 0 20px #fff;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0px);
+    background: #fff;
+  }
+}

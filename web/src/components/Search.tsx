@@ -19,7 +19,7 @@ interface Gene {
   ensemblId: string;
 }
 
-export default function Search() {
+export default () => {
   const [value, setValue] = React.useState<(Gene | string)[]>([]);
   const [inputValue, setInputValue] = React.useState<string>("");
   const [searchOptions, setSearchOptions] = React.useState<Gene[]>([]);
@@ -52,6 +52,9 @@ export default function Search() {
       <Grid item>
         <Autocomplete
           multiple
+          ListboxProps={{
+            style: { maxHeight: "15rem" },
+          }}
           id="search"
           filterOptions={filterOptions}
           options={searchOptions.map((option) => option)}
@@ -134,4 +137,4 @@ export default function Search() {
       </Grid>
     </Grid>
   );
-}
+};

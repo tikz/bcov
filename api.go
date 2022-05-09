@@ -49,8 +49,8 @@ func SearchGenesEndpoint(c *gin.Context) {
 	sort.SliceStable(genes, func(i, j int) bool {
 		return strings.Index(genes[i].Name, nameUpper) > strings.Index(genes[j].Name, nameUpper)
 	})
-	if len(genes) > 5 {
-		genes = genes[:5]
+	if len(genes) > 20 {
+		genes = genes[:20]
 	}
 
 	if result.RowsAffected > 0 {

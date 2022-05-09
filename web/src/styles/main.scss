@@ -1,0 +1,22 @@
+@import "globals";
+
+@import "animations";
+@import "splash";
+@import "search";
+@import "footer";
+@import "scrollbar";
+
+@font-face {
+  font-family: "Intro";
+  src: url("../fonts/Intro.ttf.woff") format("woff"),
+    url("../fonts/Intro.ttf.svg#Intro") format("svg"),
+    url("../fonts/Intro.ttf.eot"),
+    url("../fonts/Intro.ttf.eot?#iefix") format("embedded-opentype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+.App {
+  text-align: center;
+  z-index: 1;
+}
