@@ -8,6 +8,7 @@ RUN go mod tidy
 RUN go build
 
 WORKDIR /bcov/web
+RUN npm install
 RUN npm run build
 
 WORKDIR /bcov
