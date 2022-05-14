@@ -15,8 +15,10 @@
     "@types/react": "^18.0.8",
     "@types/react-dom": "^18.0.3",
     "autosuggest-highlight": "^3.2.1",
+    "jsurl": "^0.1.5",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
+    "react-router-dom": "^6.3.0",
     "react-scripts": "5.0.1",
     "sass": "^1.51.0",
     "sine-waves": "^0.3.0",
@@ -51,5 +53,8 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:8080"
+  "proxy": "http://localhost:8080",
+  "devDependencies": {
+    "@types/jsurl": "^1.2.30"
+  }
 }

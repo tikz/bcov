@@ -11,18 +11,91 @@ import { createFilterOptions } from "@mui/material/Autocomplete";
 import React from "react";
 const stc = require("string-to-color");
 
-interface Gene {
+interface SearchResult {
   id: number;
   name: string;
-  access: string;
   description: string;
-  ensemblId: string;
 }
 
+class Kit implements SearchResult {
+  public description: string;
+  constructor(public id: number, public name: string) {
+    this.id = id;
+    this.name = name;
+    this.description = "DNA capture kit";
+  }
+}
+class Gene implements SearchResult {
+  constructor(
+    public id: number,
+    public name: string,
+    public description: string,
+    public access: string,
+    public ensemblId: string
+  ) {
+    this.id = id;
+    this.name = name;
+    this.description = description;
+    this.access = access;
+    this.ensemblId = ensemblId;
+  }
+}
+
+// function OptionChip({ option: SearchResult }) {
+//   console.log(option);
+//   return (
+//     <Chip
+//       key={option.id}
+//       variant="outlined"
+//       label={option.name}
+//       sx={{
+//         backgroundColor: stc(option.name) + 33,
+//         cursor: "pointer",
+//         borderColor: option instanceof Kit ? "#f05a63" : "transparent",
+//       }}
+//     />
+//   );
+// }
+
+// type ChipProps = {
+//   option: SearchResult;
+//   getTagPropsFunc?: AutocompleteRenderGetTagProps;
+//   index?: number;
+// };
+
+// const OptionChip = ({ option, getTagPropsFunc, index }: ChipProps) => {
+//   const additional = {...getTagPropsFunc({ index })}
+//   return <Chip
+//   variant="outlined"
+//   label={option.name}
+//   sx={{
+//     backgroundColor: stc(option.name) + 33,
+//     cursor: "pointer",
+//     borderColor: option instanceof Kit ? "#f05a63" : "transparent",
+//   }}
+//   {additional}
+// />
+// }
+
+export interface ItemProps {
+  variant: "outlined";
+}
+
+const ChipStyle = (option: SearchResult) => {
+  return {
+    variant: "outlined",
+    sx: {
+      backgroundColor: stc(option.name) + 33,
+      cursor: "pointer",
+      borderColor: option instanceof Kit ? "#f05a63" : "transparent",
+    },
+  } as ItemProps;
+};
+
 export default () => {
-  const [value, setValue] = React.useState<(Gene | string)[]>([]);
+  const [value, setValue] = React.useState<(SearchResult | string)[]>([]);
   const [inputValue, setInputValue] = React.useState<string>("");
-  const [searchOptions, setSearchOptions] = React.useState<Gene[]>([]);
+  const [searchOptions, setSearchOptions] = React.useState<SearchResult[]>([]);
   const [inProgress, setInProgress] = React.useState<Boolean>(false);
 
   React.useEffect(() => {
@@ -30,18 +103,31 @@ export default () => {
       setSearchOptions([]);
     } else {
       setInProgress(true);
-      fetch("/api/search/genes/" + inputValue)
-        .then((response) => response.json())
-        .then((data) => {
-          setSearchOptions(!("error" in data) ? data : []);
-          setInProgress(false);
-        });
+
+      (async () => {
+        let [kits, genes] = await Promise.all([
+          fetch("/api/search/kits/" + inputValue).then((response) =>
+            response.json()
+          ),
+          fetch("/api/search/genes/" + inputValue).then((response) =>
+            response.json()
+          ),
+        ]);
+        setSearchOptions([
+          ...kits.map((k: any) => new Kit(k.id, k.name)),
+          ...genes.map(
+            (k: any) =>
+              new Gene(k.id, k.name, k.description, k.access, k.ensemblId)
+          ),
+        ]);
+        setInProgress(false);
+      })();
     }
   }, [inputValue]);
 
   const filterOptions = createFilterOptions({
     matchFrom: "any",
-    stringify: (option: Gene) => option.name + option.description,
+    stringify: (option: SearchResult) => option.name + option.description,
   });
 
   return (
@@ -65,7 +151,7 @@ export default () => {
           onInputChange={(event, newInputValue) => {
             setInputValue(newInputValue);
           }}
-          onChange={(event, newValue: (string | Gene)[]) => {
+          onChange={(event, newValue: (string | SearchResult)[]) => {
             setSearchOptions([]);
             setInputValue("");
             setValue(newValue);
@@ -73,9 +159,8 @@ export default () => {
           renderTags={(value, getTagProps) =>
             value.map((option, index) => (
               <Chip
-                variant="outlined"
                 label={option.name}
-                sx={{ backgroundColor: stc(option.name) + 33 }}
+                {...ChipStyle(option)}
                 {...getTagProps({ index })}
               />
             ))
@@ -88,12 +173,12 @@ export default () => {
               sx={{ width: 500 }}
             />
           )}
-          getOptionLabel={(option: Gene | string) =>
+          getOptionLabel={(option: SearchResult | string) =>
             typeof option === "string" ? option : option.name
           }
-          renderOption={(props, option: Gene, { inputValue }) => {
+          renderOption={(props, option: SearchResult, { inputValue }) => {
             return (
-              <li {...props}>
+              <li {...props} key={option.id + option.name}>
                 <Grid
                   container
                   alignItems="center"
@@ -101,20 +186,16 @@ export default () => {
                   spacing={1}
                 >
                   <Grid item>
-                    <Chip
-                      variant="outlined"
-                      label={option.name}
-                      sx={{
-                        backgroundColor: stc(option.name) + 33,
-                        cursor: "pointer",
-                      }}
-                    />
+                    <Chip label={option.name} {...ChipStyle(option)} />
                   </Grid>
                   <Grid item>
                     <Typography
                       variant="caption"
                       color="textSecondary"
-                      sx={{ fontSize: 10 }}
+                      sx={{
+                        fontSize: 10,
+                        color: option instanceof Kit ? "#f05a63" : "inherit",
+                      }}
                     >
                       {option.description}
                     </Typography>
