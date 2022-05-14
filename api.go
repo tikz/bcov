@@ -43,7 +43,7 @@ func SearchGenesEndpoint(c *gin.Context) {
 
 	var genes []db.Gene
 	search := fmt.Sprintf("%%%s%%", name)
-	result := db.DB.Where("name LIKE ? OR description LIKE ?", search, search).Find(&genes)
+	db.DB.Where("name LIKE ? OR description LIKE ?", search, search).Find(&genes)
 
 	// Prioritize sorting first by gene name, then by description
 	nameUpper := strings.ToUpper(name)
@@ -54,11 +54,8 @@ func SearchGenesEndpoint(c *gin.Context) {
 		genes = genes[:20]
 	}
 
-	if result.RowsAffected > 0 {
-		c.JSON(http.StatusOK, genes)
-	} else {
-		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
-	}
+	c.JSON(http.StatusOK, genes)
+
 }
 
 func SearchKitsEndpoint(c *gin.Context) {
@@ -70,12 +67,8 @@ func SearchKitsEndpoint(c *gin.Context) {
 
 	var kits []db.Kit
 	search := fmt.Sprintf("%%%s%%", name)
-	result := db.DB.Where("name LIKE ? ", search).Find(&kits)
-	if result.RowsAffected > 0 {
-		c.JSON(http.StatusOK, kits)
-	} else {
-		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
-	}
+	db.DB.Where("name LIKE ? ", search).Find(&kits)
+	c.JSON(http.StatusOK, kits)
 }
 
 // SELECT k.id, k.name, dc.depth, avg(dc.coverage) as coverage FROM depth_coverages dc
