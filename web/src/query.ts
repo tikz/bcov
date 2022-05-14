@@ -1,15 +1,20 @@
 import * as React from "react";
 import type { NavigateOptions } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
-
 const JSURL = require("jsurl");
 
-interface Query {
-  genes: string[];
-  kits: string[];
+export interface Query {
+  geneIds: number[];
+  kitIds: number[];
 }
 
-function useQueryParam<T>(
+export function generateQueryURL(query: Query) {
+  let searchParams = new URLSearchParams();
+  searchParams.set("q", JSURL.stringify(query));
+  return searchParams.toString();
+}
+
+export function useQueryParam<T>(
   key: string
 ): [T | undefined, (newQuery: T, options?: NavigateOptions) => void] {
   let [searchParams, setSearchParams] = useSearchParams();

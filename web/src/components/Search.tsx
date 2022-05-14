@@ -9,94 +9,30 @@ import {
 } from "@mui/material";
 import { createFilterOptions } from "@mui/material/Autocomplete";
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { Gene, ISearchResult, Kit } from "../definitions";
+import { generateQueryURL, Query } from "../query";
+import api from "../services";
 const stc = require("string-to-color");
 
-interface SearchResult {
-  id: number;
-  name: string;
-  description: string;
-}
-
-class Kit implements SearchResult {
-  public description: string;
-  constructor(public id: number, public name: string) {
-    this.id = id;
-    this.name = name;
-    this.description = "DNA capture kit";
-  }
-}
-class Gene implements SearchResult {
-  constructor(
-    public id: number,
-    public name: string,
-    public description: string,
-    public access: string,
-    public ensemblId: string
-  ) {
-    this.id = id;
-    this.name = name;
-    this.description = description;
-    this.access = access;
-    this.ensemblId = ensemblId;
-  }
-}
-
-// function OptionChip({ option: SearchResult }) {
-//   console.log(option);
-//   return (
-//     <Chip
-//       key={option.id}
-//       variant="outlined"
-//       label={option.name}
-//       sx={{
-//         backgroundColor: stc(option.name) + 33,
-//         cursor: "pointer",
-//         borderColor: option instanceof Kit ? "#f05a63" : "transparent",
-//       }}
-//     />
-//   );
-// }
-
-// type ChipProps = {
-//   option: SearchResult;
-//   getTagPropsFunc?: AutocompleteRenderGetTagProps;
-//   index?: number;
-// };
-
-// const OptionChip = ({ option, getTagPropsFunc, index }: ChipProps) => {
-//   const additional = {...getTagPropsFunc({ index })}
-//   return <Chip
-//   variant="outlined"
-//   label={option.name}
-//   sx={{
-//     backgroundColor: stc(option.name) + 33,
-//     cursor: "pointer",
-//     borderColor: option instanceof Kit ? "#f05a63" : "transparent",
-//   }}
-//   {additional}
-// />
-// }
-
-export interface ItemProps {
-  variant: "outlined";
-}
-
-const ChipStyle = (option: SearchResult) => {
-  return {
-    variant: "outlined",
-    sx: {
-      backgroundColor: stc(option.name) + 33,
-      cursor: "pointer",
-      borderColor: option instanceof Kit ? "#f05a63" : "transparent",
-    },
-  } as ItemProps;
-};
-
 export default () => {
-  const [value, setValue] = React.useState<(SearchResult | string)[]>([]);
+  const navigate = useNavigate();
+  const [value, setValue] = React.useState<(ISearchResult | string)[]>([]);
   const [inputValue, setInputValue] = React.useState<string>("");
-  const [searchOptions, setSearchOptions] = React.useState<SearchResult[]>([]);
+  const [searchOptions, setSearchOptions] = React.useState<ISearchResult[]>([]);
   const [inProgress, setInProgress] = React.useState<Boolean>(false);
+  const [query, setQuery] = React.useState<string>("");
+
+  React.useEffect(() => {
+    const query: Query = {
+      geneIds: value
+        .filter((v): v is Gene => v instanceof Gene)
+        .map((v) => v.id),
+      kitIds: value.filter((v): v is Kit => v instanceof Kit).map((v) => v.id),
+    };
+
+    setQuery(generateQueryURL(query));
+  }, [setQuery, value]);
 
   React.useEffect(() => {
     if (inputValue.length < 3) {
@@ -104,30 +40,17 @@ export default () => {
     } else {
       setInProgress(true);
 
-      (async () => {
-        let [kits, genes] = await Promise.all([
-          fetch("/api/search/kits/" + inputValue).then((response) =>
-            response.json()
-          ),
-          fetch("/api/search/genes/" + inputValue).then((response) =>
-            response.json()
-          ),
-        ]);
-        setSearchOptions([
-          ...kits.map((k: any) => new Kit(k.id, k.name)),
-          ...genes.map(
-            (k: any) =>
-              new Gene(k.id, k.name, k.description, k.access, k.ensemblId)
-          ),
-        ]);
-        setInProgress(false);
-      })();
+      api.search(inputValue).then((r) => {
+        setSearchOptions(r);
+      });
+
+      setInProgress(false);
     }
   }, [inputValue]);
 
   const filterOptions = createFilterOptions({
     matchFrom: "any",
-    stringify: (option: SearchResult) => option.name + option.description,
+    stringify: (option: ISearchResult) => option.name + option.description,
   });
 
   return (
@@ -151,7 +74,7 @@ export default () => {
           onInputChange={(event, newInputValue) => {
             setInputValue(newInputValue);
           }}
-          onChange={(event, newValue: (string | SearchResult)[]) => {
+          onChange={(event, newValue: (string | ISearchResult)[]) => {
             setSearchOptions([]);
             setInputValue("");
             setValue(newValue);
@@ -173,10 +96,10 @@ export default () => {
               sx={{ width: 500 }}
             />
           )}
-          getOptionLabel={(option: SearchResult | string) =>
+          getOptionLabel={(option: ISearchResult | string) =>
             typeof option === "string" ? option : option.name
           }
-          renderOption={(props, option: SearchResult, { inputValue }) => {
+          renderOption={(props, option: ISearchResult, { inputValue }) => {
             return (
               <li {...props} key={option.id + option.name}>
                 <Grid
@@ -212,10 +135,25 @@ export default () => {
           color="primary"
           sx={{ height: 56 }}
           disabled={value.length === 0}
+          onClick={() => {
+            navigate("/results?" + query);
+          }}
         >
           See coverages
         </Button>
       </Grid>
     </Grid>
   );
+};
+
+const ChipStyle = (option: ISearchResult) => {
+  return {
+    variant: "outlined" as "outlined",
+    sx: {
+      backgroundColor: stc(option.name) + 33,
+      cursor: "pointer",
+      border: 0,
+      boxShadow: option instanceof Kit ? "0 0 10px #f05a63" : "inherit",
+    },
+  };
 };

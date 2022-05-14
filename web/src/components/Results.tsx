@@ -1,57 +1,47 @@
-import * as React from "react";
-import type { NavigateOptions } from "react-router-dom";
-import { useSearchParams } from "react-router-dom";
+import { Query, useQueryParam } from "../query";
 
-const JSURL = require("jsurl");
+// class GeneResults extends Gene {
+//   public regions: string[];
+//   constructor(
+//     id: number
+//   ) {
+//     super(id, name, description, access, ensemblId);
+//     this.regions = regions;
+//   }
 
-interface Query {
-  genes: string[];
-  kits: string[];
-}
+//   fetch() {
+//     (async () => {
+//       let gene = await fetch("/api/gene/" + this.id).then((response) =>
+//         response.json()
+//       );
 
-function useQueryParam<T>(
-  key: string
-): [T | undefined, (newQuery: T, options?: NavigateOptions) => void] {
-  let [searchParams, setSearchParams] = useSearchParams();
-  let paramValue = searchParams.get(key);
-
-  let value = React.useMemo(() => JSURL.parse(paramValue), [paramValue]);
-
-  let setValue = React.useCallback(
-    (newValue: T, options?: NavigateOptions) => {
-      let newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.set(key, JSURL.stringify(newValue));
-      setSearchParams(newSearchParams, options);
-    },
-    [key, searchParams, setSearchParams]
-  );
-
-  return [value, setValue];
-}
-
+//       console.log(gene)
+//     })();
+//   }
+// }
+// class Region {
+//   constructor(
+//     public id: number,
+//     public chromosome: string,
+//     public start: number,
+//     public end: number,
+//     public exonNumber: number
+//   ) {
+//     this.id = id;
+//     this.chromosome = chromosome;
+//     this.start = start;
+//     this.end = end;
+//     this.exonNumber = exonNumber;
+//   }
+// }
 export default () => {
-  let [query, setQuery] = useQueryParam<Query>("query");
-
-  React.useEffect(() => {
-    let query: Query = {
-      genes: ["abc", "test"],
-      kits: ["def", "ghi"],
-    };
-    console.log(query);
-
-    setQuery(query, {
-      replace: true,
-    });
-  }, [setQuery]);
-
-  console.log(query);
+  let [query, setQuery] = useQueryParam<Query>("q");
 
   return (
     <>
       <h1>Results</h1>
 
       <p>The current form values are:</p>
-
       <pre>{JSON.stringify(query || {}, null, 2)}</pre>
     </>
   );

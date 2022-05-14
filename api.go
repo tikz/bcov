@@ -23,12 +23,24 @@ func KitsEndpoint(c *gin.Context) {
 }
 
 func GeneEndpoint(c *gin.Context) {
-	name := c.Param("name")
+	name := c.Param("id")
 
 	var gene db.Gene
-	result := db.DB.Where("name = ?", name).Preload("Regions").First(&gene)
+	result := db.DB.Where("id = ?", name).Preload("Regions").First(&gene)
 	if result.RowsAffected > 0 {
 		c.JSON(http.StatusOK, gene)
+	} else {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+	}
+}
+
+func KitEndpoint(c *gin.Context) {
+	id := c.Param("id")
+
+	var kit db.Kit
+	result := db.DB.Where("id = ?", id).First(&kit)
+	if result.RowsAffected > 0 {
+		c.JSON(http.StatusOK, kit)
 	} else {
 		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 	}
@@ -109,7 +121,8 @@ func runWebServer() {
 	r.Use(static.Serve("/", static.LocalFile("web/build", true)))
 
 	r.GET("/api/kits", KitsEndpoint)
-	r.GET("/api/gene/:name", GeneEndpoint)
+	r.GET("/api/kit/:id", GeneEndpoint)
+	r.GET("/api/gene/:id", GeneEndpoint)
 
 	r.GET("/api/search/genes/:name", SearchGenesEndpoint)
 	r.GET("/api/search/kits/:name", SearchKitsEndpoint)
