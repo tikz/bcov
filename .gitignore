@@ -2,7 +2,6 @@ bcov
 *.db*
 .env
 
-README.md
 .vscode
 B0434109PTC_Result
 bams/

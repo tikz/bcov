@@ -19,13 +19,13 @@ type BAMFile struct {
 }
 
 type Gene struct {
-	ID                  uint `gorm:"primarykey"`
-	HGNCAccession       string
+	ID                  uint   `gorm:"primarykey" json:"id"`
+	HGNCAccession       string `json:"hgncAccession"`
 	GeneAccession       string `gorm:"index"`
 	Name                string `gorm:"index"`
-	Description         string
-	TranscriptAccession string
-	Exons               []Exon
+	Description         string `json:"description"`
+	TranscriptAccession string `json:"transcriptAccession"`
+	Exons               []Exon `json:"exons"`
 }
 
 type Exon struct {

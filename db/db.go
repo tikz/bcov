@@ -17,11 +17,12 @@ import (
 var DB *gorm.DB
 
 func ConnectDB() {
-	fmt.Println("Database engine:\t", os.Getenv("BCOV_DB_ENGINE"))
 	if os.Getenv("BCOV_DB_ENGINE") == "postgres" {
 		ConnectPostgres()
+		fmt.Println("Database engine:\t", "postgres")
 	} else {
 		ConnectSQLite()
+		fmt.Println("Database engine:\t", "sqlite")
 	}
 
 	automigrate()

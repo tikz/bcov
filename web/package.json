@@ -1,6 +1,6 @@
 {
   "name": "bcov-frontend",
-  "version": "0.1.0",
+  "version": "0.2.1-alpha.1-20-ge13913d",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.9.0",
@@ -15,16 +15,21 @@
     "@types/react": "^18.0.8",
     "@types/react-dom": "^18.0.3",
     "autosuggest-highlight": "^3.2.1",
+    "axios": "^0.27.2",
+    "jsurl": "^0.1.5",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
+    "react-router-dom": "^6.3.0",
     "react-scripts": "5.0.1",
+    "sass": "^1.51.0",
     "sine-waves": "^0.3.0",
+    "string-to-color": "^2.2.2",
     "typescript": "^4.6.4",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "start": "export REACT_APP_COMMIT=$(git rev-parse --short HEAD) && react-scripts start",
+    "build": "export REACT_APP_COMMIT=$(git rev-parse --short HEAD) && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -32,7 +37,10 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "import/no-anonymous-default-export": "off"
+    }
   },
   "browserslist": {
     "production": [
@@ -45,5 +53,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "proxy": "http://localhost:8080",
+  "devDependencies": {
+    "@types/jsurl": "^1.2.30"
   }
 }
