@@ -13,12 +13,12 @@ import (
 	"github.com/fatih/color"
 )
 
-func bamWorker(bamReader *bam.Reader, regions []Region, rChan chan<- Region) {
+func bamWorker(bamReader *bam.Reader, exons []Exon, rChan chan<- Exon) {
 	spinner := utils.NewSpinner(fmt.Sprintf("reading %s", bamReader.Path))
 	spinner.Start()
 	defer spinner.StopDuration()
 
-	for len(regions) != 0 {
+	for len(exons) != 0 {
 		rec, err := bamReader.Read()
 		if err == io.EOF {
 			return
@@ -40,12 +40,12 @@ func bamWorker(bamReader *bam.Reader, regions []Region, rChan chan<- Region) {
 		flags := !(rec.Flags&sam.Duplicate == sam.Duplicate)
 
 		if flags {
-			if utils.ChromosomeIndex(regions[0].Chromosome) > utils.ChromosomeIndex(readChromosome) {
+			if utils.ChromosomeIndex(exons[0].Chromosome) > utils.ChromosomeIndex(readChromosome) {
 				continue
 			}
 
-			// Regions positions that fall within this read
-			for _, r := range regions {
+			// Exons positions that fall within this read
+			for _, r := range exons {
 				overlap := r.Chromosome == readChromosome && readStart <= r.End && readEnd >= r.Start
 				if overlap {
 					r.AddDepthFromTo(Position(readStart), Position(readEnd), 1)
@@ -56,19 +56,19 @@ func bamWorker(bamReader *bam.Reader, regions []Region, rChan chan<- Region) {
 			}
 		}
 
-		// Check if current region is way past the current read coordinates (done counting)
+		// Check if current exon is way past the current read coordinates (done counting)
 		//
-		// 1. sameChromosome := readChromosome == regions[0].Region.Chromosome
-		// 2. pastRegion := readStart > regions[0].Region.End
-		// 3. pastChromosome := utils.CHROMOSOME_INDEX[readChromosome] > utils.CHROMOSOME_INDEX[regions[0].Region.Chromosome]
+		// 1. sameChromosome := readChromosome == exons[0].Exon.Chromosome
+		// 2. pastExon := readStart > exons[0].Exon.End
+		// 3. pastChromosome := utils.CHROMOSOME_INDEX[readChromosome] > utils.CHROMOSOME_INDEX[exons[0].Exon.Chromosome]
 
-		// Condition: if (sameChromosome && pastRegion) || pastChromosome {
+		// Condition: if (sameChromosome && pastExon) || pastChromosome {
 		//
 		// (not defined as actual variables for performance, the evaluation can be resolved prematurely)
 
-		if (readChromosome == regions[0].Chromosome && readStart > regions[0].End) || utils.ChromosomeIndex(readChromosome) > utils.ChromosomeIndex(regions[0].Chromosome) {
-			rChan <- regions[0]
-			regions = regions[1:]
+		if (readChromosome == exons[0].Chromosome && readStart > exons[0].End) || utils.ChromosomeIndex(readChromosome) > utils.ChromosomeIndex(exons[0].Chromosome) {
+			rChan <- exons[0]
+			exons = exons[1:]
 		}
 	}
 	spinner.StopDuration()
@@ -91,9 +91,9 @@ func Load(bamPath string, kit string) {
 		fmt.Printf("If you want to load this file again, run -delete-bam %s\n", hash)
 		return
 	}
-	regions := NewRegionsFromDB()
-	rChan := make(chan Region)
-	go bamWorker(bamReader, regions, rChan)
+	exons := NewExonsFromDB()
+	rChan := make(chan Exon)
+	go bamWorker(bamReader, exons, rChan)
 
 	for r := range rChan {
 		r.StoreDepthCoverages(bamFileID)
@@ -101,27 +101,27 @@ func Load(bamPath string, kit string) {
 	}
 }
 
-func RegionDepth(bamPath string, chromosome string, start uint64, end uint64) Region {
+func ExonDepth(bamPath string, chromosome string, start uint64, end uint64) Exon {
 	bamReader, err := bam.NewReader(bamPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	region := NewRegion(chromosome, start, end)
-	rChan := make(chan Region)
-	go bamWorker(bamReader, []Region{region}, rChan)
+	exon := NewExon(chromosome, start, end)
+	rChan := make(chan Exon)
+	go bamWorker(bamReader, []Exon{exon}, rChan)
 
 	for range rChan {
-		return region
+		return exon
 	}
 
-	return region
+	return exon
 }
 
-func prettyPrint(region db.Region, depthCoverages map[int]float64) {
+func prettyPrint(exon db.Exon, depthCoverages map[int]float64) {
 	fmt.Println()
-	fmt.Print("Region ")
-	color.Red("%s:%d-%d (%d)", region.Chromosome, region.Start, region.End, region.GeneID)
+	fmt.Print("Exon ")
+	color.Red("%s:%d-%d (%d)", exon.Chromosome, exon.Start, exon.End, exon.GeneID)
 	fmt.Println(depthCoverages)
 	fmt.Println()
 }

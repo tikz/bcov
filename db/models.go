@@ -10,63 +10,65 @@ type Kit struct {
 }
 
 type BAMFile struct {
-	ID                   uint   `gorm:"primarykey"`
-	SHA256Sum            string `gorm:"uniqueIndex"`
-	Size                 uint64
-	Name                 string
-	KitID                uint
-	RegionDepthCoverages []RegionDepthCoverage `gorm:"constraint:OnDelete:CASCADE;"`
+	ID                 uint   `gorm:"primarykey"`
+	SHA256Sum          string `gorm:"uniqueIndex"`
+	Size               uint64
+	Name               string
+	KitID              uint
+	ExonDepthCoverages []ExonDepthCoverage `gorm:"constraint:OnDelete:CASCADE;"`
 }
 
 type Gene struct {
-	ID          uint `gorm:"primarykey"`
-	Accession   string
-	Name        string `gorm:"index"`
-	Description string
-	EnsemblID   string `gorm:"index"`
-	Regions     []Region
+	ID                  uint `gorm:"primarykey"`
+	HGNCAccession       string
+	GeneAccession       string `gorm:"index"`
+	Name                string `gorm:"index"`
+	Description         string
+	TranscriptAccession string
+	Exons               []Exon
 }
 
-type Region struct {
-	ID                   uint                  `gorm:"primarykey" json:"id"`
-	GeneID               uint                  `json:"-"`
-	Chromosome           string                `gorm:"index" json:"chromosome"`
-	Start                uint64                `gorm:"index" json:"start"`
-	End                  uint64                `json:"end"`
-	ExonNumber           uint                  `json:"exonNumber"`
-	RegionDepthCoverages []RegionDepthCoverage `json:"-"`
+type Exon struct {
+	ID                 uint `gorm:"primarykey" json:"id"`
+	GeneID             uint `json:"-"`
+	Strand             int
+	Chromosome         string              `gorm:"index" json:"chromosome"`
+	Start              uint64              `gorm:"index" json:"start"`
+	End                uint64              `json:"end"`
+	ExonNumber         uint                `json:"exonNumber"`
+	ExonDepthCoverages []ExonDepthCoverage `json:"-"`
 }
 
-type RegionReadCount struct {
+type ExonReadCount struct {
 	ID         uint        `gorm:"primarykey" json:"-"`
-	RegionID   uint        `gorm:"index" json:"-"`
+	ExonID     uint        `gorm:"index" json:"-"`
 	BAMFileID  uint        `gorm:"index" json:"-"`
 	BAMFile    BAMFile     `json:"bamFile"`
 	ReadCounts []ReadCount `gorm:"constraint:OnDelete:CASCADE;" json:"readCounts"`
 }
 
 type ReadCount struct {
-	ID                uint   `gorm:"primarykey" json:"-"`
-	RegionReadCountID uint   `gorm:"index" json:"-"`
-	Position          uint64 `json:"depth"`
-	Count             uint64 `json:"coverage"`
+	ID              uint   `gorm:"primarykey" json:"-"`
+	ExonReadCountID uint   `gorm:"index" json:"-"`
+	Position        uint64 `json:"depth"`
+	Count           uint64 `json:"coverage"`
 }
 
-type RegionDepthCoverage struct {
+type ExonDepthCoverage struct {
 	ID             uint            `gorm:"primarykey" json:"-"`
-	RegionID       uint            `gorm:"index" json:"-"`
+	ExonID         uint            `gorm:"index" json:"-"`
 	BAMFileID      uint            `gorm:"index" json:"-"`
 	BAMFile        BAMFile         `json:"bamFile"`
 	DepthCoverages []DepthCoverage `gorm:"constraint:OnDelete:CASCADE;" json:"depthCoverages"`
 }
 
 type DepthCoverage struct {
-	ID                    uint  `gorm:"primarykey" json:"-"`
-	RegionDepthCoverageID uint  `gorm:"index" json:"-"`
-	Depth                 uint8 `json:"depth"`
-	Coverage              uint8 `json:"coverage"`
+	ID                  uint  `gorm:"primarykey" json:"-"`
+	ExonDepthCoverageID uint  `gorm:"index" json:"-"`
+	Depth               uint8 `json:"depth"`
+	Coverage            uint8 `json:"coverage"`
 }
 
 func automigrate() {
-	DB.AutoMigrate(&Kit{}, &BAMFile{}, &Gene{}, &Region{}, &RegionReadCount{}, &ReadCount{}, &RegionDepthCoverage{}, &DepthCoverage{})
+	DB.AutoMigrate(&Kit{}, &BAMFile{}, &Gene{}, &Exon{}, &ExonReadCount{}, &ReadCount{}, &ExonDepthCoverage{}, &DepthCoverage{})
 }

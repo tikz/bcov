@@ -41,7 +41,7 @@ func DepthCoveragesEndpoint(c *gin.Context) {
 	regionID := c.Param("regionID")
 	fmt.Println(kitID)
 
-	var regionDepthCoverages []db.RegionDepthCoverage
+	var regionDepthCoverages []db.ExonDepthCoverage
 	result := db.DB.Where("region_id = ?", regionID).Preload("DepthCoverages").Preload("BAMFile").Preload("BAMFile.Kit").Find(&regionDepthCoverages)
 	if result.RowsAffected > 0 {
 		c.JSON(http.StatusOK, regionDepthCoverages)
