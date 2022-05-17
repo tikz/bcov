@@ -27,13 +27,13 @@ func cliTestDB() {
 	fmt.Println("BAM files:", count)
 	db.DB.Model(&db.Gene{}).Count(&count)
 	fmt.Println("Genes:", count)
-	db.DB.Model(&db.Region{}).Count(&count)
-	fmt.Println("Regions:", count)
-	db.DB.Model(&db.RegionDepthCoverage{}).Count(&count)
+	db.DB.Model(&db.Exon{}).Count(&count)
+	fmt.Println("Exons:", count)
+	db.DB.Model(&db.ExonDepthCoverage{}).Count(&count)
 	fmt.Println("Depth coverages:", count)
 }
 
-func cliRegion() {
+func cliExon() {
 	if *bam == "" {
 		fmt.Println("BAM file required.")
 		os.Exit(1)
@@ -52,15 +52,15 @@ func cliRegion() {
 		log.Fatal(err)
 	}
 
-	region := cov.RegionDepth(*bam, chromosome, start, end)
+	exon := cov.ExonDepth(*bam, chromosome, start, end)
 	fmt.Println("CHROMOSOME:POSITION \t DEPTH")
 	for i := start; i < end; i++ {
-		fmt.Printf("%s:%d \t\t\t %d\n", chromosome, i, region.PositionDepth[cov.Position(i)])
+		fmt.Printf("%s:%d \t\t\t %d\n", chromosome, i, exon.PositionDepth[cov.Position(i)])
 	}
 
 }
 
-func cliFetchRegions() {
+func cliFetchExons() {
 	db.ConnectDB()
 
 	spinner := utils.NewSpinner("Ensembl")
@@ -82,10 +82,10 @@ func cliFetchRegions() {
 	spinner.Start()
 	spinner.Message("loading exons")
 
-	geneExons := make(map[string][]ensembl.Region)
+	geneExons := make(map[string][]ensembl.Exon)
 	for _, exon := range exons {
 		if _, ok := geneExons[exon.GeneName]; !ok {
-			geneExons[exon.GeneName] = make([]ensembl.Region, 0)
+			geneExons[exon.GeneName] = make([]ensembl.Exon, 0)
 		}
 		geneExons[exon.GeneName] = append(geneExons[exon.GeneName], exon)
 	}
@@ -93,9 +93,9 @@ func cliFetchRegions() {
 	exonCount := 0
 	for geneName, exons := range geneExons {
 		spinner.Message(fmt.Sprintf("%s: %d exons", geneName, len(exons)))
-		geneID, created := db.StoreGene(exons[0].GeneAccession, geneName, exons[0].GeneDescription, exons[0].StableID)
+		geneID, created := db.StoreGene(exons[0].HGNCAccession, exons[0].GeneAccession, geneName, exons[0].GeneDescription, exons[0].TranscriptAccession)
 		if created {
-			db.StoreRegions(geneID, exons)
+			db.StoreExons(geneID, exons)
 		}
 		exonCount += len(exons)
 	}
@@ -103,12 +103,12 @@ func cliFetchRegions() {
 	spinner.Stop(fmt.Sprintf("%d exons in %d genes", exonCount, len(geneExons)))
 }
 
-func checkRegionsDB() {
+func checkExonsDB() {
 	var count int64
-	db.DB.Model(&db.Region{}).Count(&count)
+	db.DB.Model(&db.Exon{}).Count(&count)
 
 	if count == 0 {
-		fmt.Println("No regions found in database. You may want to run -fetch-regions first.")
+		fmt.Println("No exons found in database. You may want to run -fetch-exons first.")
 		os.Exit(1)
 	}
 
@@ -116,7 +116,7 @@ func checkRegionsDB() {
 
 func cliLoadBAM() {
 	db.ConnectDB()
-	checkRegionsDB()
+	checkExonsDB()
 
 	if *kit == "" {
 		fmt.Println(`Capture kit name not specified for this bam, add -kit "name"`)
@@ -128,7 +128,7 @@ func cliLoadBAM() {
 
 func cliLoadBAMs() {
 	db.ConnectDB()
-	checkRegionsDB()
+	checkExonsDB()
 
 	f, err := os.Open(*bams)
 	if err != nil {
@@ -156,7 +156,7 @@ func cliDeleteBam() {
 	db.ConnectDB()
 
 	var count int64
-	db.DB.Model(&db.Region{}).Count(&count)
+	db.DB.Model(&db.Exon{}).Count(&count)
 
 	var bamFile db.BAMFile
 	result := db.DB.First(&bamFile, "sha256_sum = ?", *deleteBam)

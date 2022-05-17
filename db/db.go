@@ -1,7 +1,6 @@
 package db
 
 import (
-	"bcov/bed"
 	"bcov/ensembl"
 	"bcov/utils"
 	"fmt"
@@ -68,47 +67,48 @@ func StoreFile(file string, hash string, kitID uint, size int64) (bamFileID uint
 	return bamFileDB.ID, created
 }
 
-func StoreRegion(region *bed.Region) (regionID uint) {
-	var regionDB Region
-	result := DB.Where("chromosome = ? AND start = ? AND end = ?", region.Chromosome, region.Start, region.End).First(&regionDB)
-	if result.RowsAffected == 0 {
-		regionDB = Region{Chromosome: region.Chromosome, Start: region.Start, End: region.End}
-		DB.Create(&regionDB)
-	}
-
-	return regionDB.ID
-}
-
-func StoreGene(accession string, name string, description string, ensemblID string) (geneID uint, created bool) {
+func StoreGene(hgncAccession string, geneAccession string, name string, description string, transcriptAccession string) (geneID uint, created bool) {
 	var geneDB Gene
-	result := DB.Where("ensembl_id = ?", ensemblID).First(&geneDB)
+	result := DB.Where("gene_accession = ?", geneAccession).First(&geneDB)
 	if result.RowsAffected == 0 {
 		created = true
-		geneDB = Gene{Accession: accession, Name: name, Description: description, EnsemblID: ensemblID}
+		geneDB = Gene{
+			HGNCAccession:       hgncAccession,
+			GeneAccession:       geneAccession,
+			Name:                name,
+			Description:         description,
+			TranscriptAccession: transcriptAccession,
+		}
 		DB.Create(&geneDB)
 	}
 
 	return geneDB.ID, created
 }
 
-func StoreRegions(geneID uint, regions []ensembl.Region) {
-	var regionsDB []Region
+func StoreExons(geneID uint, exons []ensembl.Exon) {
+	var exonsDB []Exon
 
-	for _, region := range regions {
-		regionsDB = append(regionsDB, Region{GeneID: geneID, Chromosome: region.Chromosome, Start: region.Start, End: region.End, ExonNumber: region.ExonNumber})
+	for _, exon := range exons {
+		exonsDB = append(exonsDB, Exon{
+			GeneID:     geneID,
+			Strand:     exon.Strand,
+			Chromosome: exon.Chromosome,
+			Start:      exon.Start,
+			End:        exon.End,
+			ExonNumber: exon.ExonNumber})
 	}
-	DB.Create(&regionsDB)
+	DB.Create(&exonsDB)
 }
 
-func GetRegions() []Region {
-	var regions []Region
-	DB.Find(&regions)
+func GetExons() []Exon {
+	var exons []Exon
+	DB.Find(&exons)
 
 	// karyotypic order
 	// sort by chromosome then start position
-	sort.SliceStable(regions, func(i, j int) bool {
-		ci := utils.ChromosomeIndex(regions[i].Chromosome)
-		cj := utils.ChromosomeIndex(regions[j].Chromosome)
+	sort.SliceStable(exons, func(i, j int) bool {
+		ci := utils.ChromosomeIndex(exons[i].Chromosome)
+		cj := utils.ChromosomeIndex(exons[j].Chromosome)
 
 		if ci < cj {
 			return true
@@ -116,10 +116,10 @@ func GetRegions() []Region {
 		if ci > cj {
 			return false
 		}
-		return regions[i].Start < regions[j].Start
+		return exons[i].Start < exons[j].Start
 	})
 
-	return regions
+	return exons
 }
 
 func StoreKit(name string) (kitID uint, created bool) {
