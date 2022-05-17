@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/gin-contrib/cors"
@@ -23,15 +24,72 @@ func KitsEndpoint(c *gin.Context) {
 }
 
 func GeneEndpoint(c *gin.Context) {
-	name := c.Param("id")
+	id := c.Param("id")
 
 	var gene db.Gene
-	result := db.DB.Where("id = ?", name).Preload("Regions").First(&gene)
+	result := db.DB.Where("id = ?", id).Preload("Regions").First(&gene)
 	if result.RowsAffected > 0 {
 		c.JSON(http.StatusOK, gene)
 	} else {
 		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 	}
+}
+
+func ReadsEndpoint(c *gin.Context) {
+	kitId, _ := strconv.Atoi(c.Param("kit_id"))
+	regionId, _ := strconv.Atoi(c.Param("region_id"))
+
+	var region db.Region
+	db.DB.Where("id = ?", regionId).First(&region)
+
+	type ReadCount struct {
+		Position uint64  `json:"position"`
+		AvgCount float64 `json:"avgCount"`
+	}
+
+	var readCounts []ReadCount
+	db.DB.Raw(`
+			SELECT position, avg(count) avg_count FROM read_counts rc
+			INNER JOIN region_read_counts rdc on rc.region_read_count_id = rdc.id
+			INNER JOIN bam_files bf on rdc.bam_file_id = bf.id
+			WHERE rdc.region_id = ? AND bf.kit_id = ?
+			GROUP BY rc.position
+			ORDER BY position
+	`, regionId, kitId).Scan(&readCounts)
+
+	var start uint64
+	if len(readCounts) == 0 {
+		start = region.Start
+	} else {
+		start = readCounts[0].Position
+	}
+
+	readCountsM := make(map[uint64]float64)
+	for _, readCount := range readCounts {
+		readCountsM[readCount.Position] = readCount.AvgCount
+	}
+
+	var filledReadCounts []ReadCount
+	for i := uint64(0); i <= region.End-start; i++ {
+		if i%10 == 0 {
+			if readCount, ok := readCountsM[start+i]; ok {
+				filledReadCounts = append(filledReadCounts, ReadCount{Position: start + i, AvgCount: readCount})
+			} else {
+				filledReadCounts = append(filledReadCounts, ReadCount{Position: start + i, AvgCount: 0})
+			}
+		}
+	}
+
+	var kit db.Kit
+	db.DB.Where("id = ?", kitId).First(&kit)
+
+	type Response struct {
+		KitName    string      `json:"kitName"`
+		ReadCounts []ReadCount `json:"readCounts"`
+	}
+
+	c.JSON(http.StatusOK, Response{KitName: kit.Name, ReadCounts: filledReadCounts})
+
 }
 
 func KitEndpoint(c *gin.Context) {
@@ -123,6 +181,7 @@ func runWebServer() {
 	r.GET("/api/kits", KitsEndpoint)
 	r.GET("/api/kit/:id", GeneEndpoint)
 	r.GET("/api/gene/:id", GeneEndpoint)
+	r.GET("/api/reads/:kit_id/:region_id", ReadsEndpoint)
 
 	r.GET("/api/search/genes/:name", SearchGenesEndpoint)
 	r.GET("/api/search/kits/:name", SearchKitsEndpoint)

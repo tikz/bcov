@@ -47,3 +47,18 @@
     background: #fff;
   }
 }
+
+@keyframes pulsateglow {
+  0% {
+    filter: drop-shadow(0px 0px 0px $primary) drop-shadow(0px 0px 0px $primary);
+    transform: scaleY(0.9);
+  }
+  50% {
+    filter: drop-shadow(0px 0px 10px $primary) drop-shadow(0px 0px 1px #000);
+    transform: scaleY(1);
+  }
+  100% {
+    filter: drop-shadow(0px 0px 0px $primary) drop-shadow(0px 0px 0px $primary);
+    transform: scaleY(0.9);
+  }
+}

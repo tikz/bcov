@@ -4,13 +4,13 @@ export interface ISearchResult {
   description: string;
 }
 
-interface IKit extends ISearchResult {
+export interface IKit extends ISearchResult {
   id: number;
   name: string;
   description: string;
 }
 
-interface IGene extends ISearchResult {
+export interface IGene extends ISearchResult {
   id: number;
   name: string;
   description: string;
@@ -19,7 +19,7 @@ interface IGene extends ISearchResult {
   regions: IRegion[];
 }
 
-interface IRegion {
+export interface IRegion {
   id: number;
   chromosome: string;
   start: number;
@@ -53,5 +53,34 @@ export class Gene implements IGene {
     this.accession = obj?.accession ?? "";
     this.ensemblId = obj?.ensemblId ?? "";
     this.regions = obj?.regions ?? [];
+  }
+}
+
+export interface IReadCount {
+  position: number;
+  avgCount: number;
+}
+export class ReadCount {
+  public position: number;
+  public avgCount: number;
+
+  constructor(obj: IReadCount) {
+    this.position = obj?.position ?? 0;
+    this.avgCount = obj?.avgCount ?? 0;
+  }
+}
+
+export interface IKitReadCounts {
+  kitName: string;
+  readCounts: ReadCount[];
+}
+
+export class KitReadCounts {
+  public kitName: string;
+  public readCounts: ReadCount[];
+
+  constructor(obj: IKitReadCounts) {
+    this.kitName = obj?.kitName ?? "";
+    this.readCounts = obj?.readCounts ?? [];
   }
 }

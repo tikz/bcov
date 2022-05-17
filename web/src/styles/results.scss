@@ -1,0 +1,8 @@
+.exon {
+  cursor: pointer;
+}
+
+.exon.active {
+  animation: pulsateglow 1s infinite;
+  transform-origin: center center;
+}
