@@ -1,20 +1,25 @@
-import CircleIcon from "@mui/icons-material/Circle";
-import { Container, Grid, Modal, Paper, Typography } from "@mui/material";
+import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import {
+  Button,
+  Container,
+  Dialog,
+  Fade,
+  Grid,
+  Paper,
+  Typography,
+} from "@mui/material";
+import IconButton from "@mui/material/IconButton";
+import { Box } from "@mui/system";
 import React from "react";
-import { Gene, IRegion, Kit } from "../../definitions";
+import { Gene, IExon, Kit } from "../../definitions";
 import api from "../../services";
+import { stringToColor } from "../../theme";
+import BAMSources from "./BAMSources";
+import DepthCoverages from "./DepthCoverages";
 import ExonMap from "./ExonMap";
 import ReadCounts from "./ReadCounts";
-
-const stc = require("string-to-color");
-const style = {
-  position: "absolute" as "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  border: 0,
-  zIndex: 10,
-};
+import Variants from "./Variants";
 
 type ResultsProps = {
   open: boolean;
@@ -24,31 +29,47 @@ type ResultsProps = {
 };
 
 export default ({ open, onClose, genes, kits }: ResultsProps) => {
-  const [currentGeneIndex, setCurrentGeneIndex] = React.useState<number>(0);
-  const [gene, setGene] = React.useState<Gene>(genes[currentGeneIndex]);
-  const [region, setRegion] = React.useState<IRegion>({} as IRegion);
+  const [gene, setGene] = React.useState<Gene>(genes[0]);
+  const [exon, setExon] = React.useState<IExon | undefined>(undefined);
 
   React.useEffect(() => {
-    api.getGene(genes[currentGeneIndex].id).then((g: Gene) => {
+    api.getGene(gene.id).then((g: Gene) => {
       setGene(g);
+      setExon(g.exons[0]);
     });
-  }, [currentGeneIndex, genes]);
-  console.log(region);
+  }, [genes, gene.id]);
+
   return (
-    <Modal open={open} onClose={onClose} disableAutoFocus={true}>
-      <Container sx={style}>
-        <Paper elevation={2} sx={{ padding: "1rem" }}>
-          <Grid container alignItems="center" spacing={1}>
-            <Grid item>
-              <CircleIcon sx={{ color: stc(gene.name) }} />
-            </Grid>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      disableAutoFocus={true}
+      maxWidth="lg"
+      fullWidth
+      scroll="body"
+    >
+      <Container id="results">
+        <Paper elevation={2} sx={{ padding: "1rem" }} id="results-paper">
+          <Grid
+            container
+            alignItems="flex-start"
+            justifyContent="space-between"
+            spacing={1}
+          >
             <Grid item>
               <Typography variant="h2">{gene.name}</Typography>
+              <Box
+                sx={{
+                  backgroundColor: stringToColor(gene.name) + "33",
+                  height: 10,
+                  width: 50,
+                }}
+              />
               <Typography
                 variant="caption"
                 sx={{
-                  paddingLeft: 4,
-                  marginTop: -0.5,
+                  marginTop: "-15px",
+                  paddingLeft: "60px",
                   display: "block",
                   color: "text.secondary",
                 }}
@@ -56,27 +77,221 @@ export default ({ open, onClose, genes, kits }: ResultsProps) => {
                 {gene.description}
               </Typography>
             </Grid>
+            <Grid item>
+              <Grid container direction="column" alignItems="flex-end">
+                <Grid item>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    <a
+                      href={`https://www.genenames.org/data/gene-symbol-report/#!/hgnc_id/${gene.hgncAccession}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {gene.hgncAccession}
+                    </a>
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    <a
+                      href={`https://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=${gene.geneAccession}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {gene.geneAccession}
+                    </a>
+                  </Typography>
+                </Grid>
+
+                <Grid item>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    GRCh38.p3 (hg38)
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Grid>
           </Grid>
           <br />
-          <Typography variant="h4" gutterBottom>
-            Exons
-          </Typography>
-          {gene.regions.length > 0 && (
-            <ExonMap gene={gene} setRegion={setRegion} />
-          )}
-          <Typography variant="h4" gutterBottom>
-            Read counts
-          </Typography>
-          {region.id && <ReadCounts kits={kits} regionId={region.id} />}
+          <Fade in={true} timeout={500}>
+            <Grid
+              container
+              justifyContent="space-between"
+              alignItems="flex-start"
+            >
+              <Grid item>
+                <Typography variant="h4" gutterBottom>
+                  Transcript
+                </Typography>
+              </Grid>
+              <Grid item>
+                <Grid container direction="column" alignItems="flex-end">
+                  <Grid item>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      <a
+                        href={`https://www.ensembl.org/Homo_sapiens/Transcript/Summary?db=core;g=${gene.geneAccession};t=${gene.transcriptAccession}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {gene.transcriptAccession}
+                      </a>{" "}
+                      MANE Select
+                    </Typography>
+                  </Grid>
 
-          {/* <>
-            <h1>Results</h1>
+                  <Grid item>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      {gene.exons.length > 0 && gene.exons[0].strand === 1
+                        ? "forward"
+                        : "reverse"}{" "}
+                      strand
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Grid>
+          </Fade>
+          {exon && <ExonMap gene={gene} exon={exon} setExon={setExon} />}
+          <Paper
+            elevation={4}
+            sx={{
+              padding: "1rem",
+              marginTop: 2,
+              backgroundColor: stringToColor(gene.name) + 11,
+            }}
+          >
+            {exon && (
+              <Grid
+                container
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Grid item>
+                  <Grid container alignItems="center" spacing={1}>
+                    <Grid item>
+                      <IconButton
+                        aria-label="delete"
+                        disabled={
+                          (exon.strand === 1 && exon.exonNumber === 1) ||
+                          (exon.strand === -1 &&
+                            exon.exonNumber === gene.exons.length)
+                        }
+                        onClick={() => {
+                          setExon(
+                            exon.strand === 1
+                              ? gene.exons[exon.exonNumber - 2]
+                              : gene.exons[
+                                  gene.exons.length - exon.exonNumber - 1
+                                ]
+                          );
+                        }}
+                      >
+                        <NavigateBeforeIcon />
+                      </IconButton>
+                    </Grid>
+                    <Grid item>
+                      <Box sx={{ width: 100 }}>
+                        <Typography variant="h5" align="center">
+                          Exon #{exon.exonNumber}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item>
+                      <IconButton
+                        aria-label="delete"
+                        disabled={
+                          (exon.strand === 1 &&
+                            exon.exonNumber === gene.exons.length) ||
+                          (exon.strand === -1 && exon.exonNumber === 1)
+                        }
+                        onClick={() => {
+                          setExon(
+                            exon.strand === 1
+                              ? gene.exons[exon.exonNumber]
+                              : gene.exons[
+                                  gene.exons.length - exon.exonNumber + 1
+                                ]
+                          );
+                        }}
+                      >
+                        <NavigateNextIcon />
+                      </IconButton>
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid item>
+                  <Grid container direction="column" alignItems="flex-end">
+                    <Grid item>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: "text.secondary" }}
+                      >
+                        chr{exon.chromosome}:{exon.start.toLocaleString()}-
+                        {exon.end.toLocaleString()}
+                      </Typography>
+                    </Grid>
+                    <Grid item>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: "text.secondary" }}
+                      >
+                        {exon.end - exon.start + 1} bp long
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+            )}
+          </Paper>
 
-            <p>The current form values are:</p>
-            <pre>{JSON.stringify(query || {}, null, 2)}</pre>
-          </> */}
+          <Grid container spacing={1}>
+            <Grid item xs={6}>
+              <Paper elevation={4} sx={{ padding: "1rem", marginTop: 2 }}>
+                {exon && <ReadCounts kits={kits} exonId={exon.id} />}
+              </Paper>
+            </Grid>
+            <Grid item xs={6}>
+              <Paper elevation={4} sx={{ padding: "1rem", marginTop: 2 }}>
+                {exon && <DepthCoverages kits={kits} exonId={exon.id} />}
+              </Paper>
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={1}>
+            <Grid item xs={12}>
+              <Paper elevation={4} sx={{ padding: "1rem", marginTop: 2 }}>
+                {exon && <Variants kits={kits} exonId={exon.id} />}
+              </Paper>
+            </Grid>
+          </Grid>
+          <Grid container justifyContent="space-between" sx={{ marginTop: 1 }}>
+            <Grid item>
+              <BAMSources kits={kits} />
+            </Grid>
+            <Grid item>
+              <Button
+                variant="outlined"
+                href={`/api/variants-csv/${gene.name}`}
+              >
+                Export CSV
+              </Button>
+            </Grid>
+          </Grid>
         </Paper>
       </Container>
-    </Modal>
+    </Dialog>
   );
 };

@@ -33,7 +33,7 @@ func Connect() (*sqlx.DB, error) {
 
 func GetExons(db *sqlx.DB) ([]Exon, error) {
 	exons := []Exon{}
-	q := `
+	query := `
 		SELECT
 		xref_gene.dbprimary_acc AS hgnc_accession,
 		gene.stable_id AS gene_accession,
@@ -63,7 +63,7 @@ func GetExons(db *sqlx.DB) ([]Exon, error) {
 		ORDER BY chromosome, start
 	`
 
-	err := db.Select(&exons, q)
+	err := db.Select(&exons, query)
 	if err != nil {
 		return nil, err
 	}

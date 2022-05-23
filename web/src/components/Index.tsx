@@ -24,8 +24,8 @@ export default () => (
 
             <Grid item>
               <Typography variant="body1" id="desc">
-                A tool for the indexing of gene depth coverages across exome
-                sequencing data.
+                A tool for the indexing of gene depth coverages across human
+                exome sequencing data.
               </Typography>
             </Grid>
             <Grid item>

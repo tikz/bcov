@@ -14,17 +14,19 @@ export interface IGene extends ISearchResult {
   id: number;
   name: string;
   description: string;
-  accession: string;
-  ensemblId: string;
-  regions: IRegion[];
+  hgncAccession: string;
+  geneAccession: string;
+  transcriptAccession: string;
+  exons: IExon[];
 }
 
-export interface IRegion {
+export interface IExon {
   id: number;
   chromosome: string;
   start: number;
   end: number;
   exonNumber: number;
+  strand: number;
 }
 
 export class Kit implements ISearchResult {
@@ -42,17 +44,19 @@ export class Gene implements IGene {
   public id: number;
   public name: string;
   public description: string;
-  public accession: string;
-  public ensemblId: string;
-  public regions: IRegion[];
+  public hgncAccession: string;
+  public geneAccession: string;
+  public transcriptAccession: string;
+  public exons: IExon[];
 
   constructor(obj: IGene) {
     this.id = obj?.id ?? 0;
     this.name = obj?.name ?? "";
     this.description = obj?.description ?? "";
-    this.accession = obj?.accession ?? "";
-    this.ensemblId = obj?.ensemblId ?? "";
-    this.regions = obj?.regions ?? [];
+    this.hgncAccession = obj?.hgncAccession ?? "";
+    this.geneAccession = obj?.geneAccession ?? "";
+    this.transcriptAccession = obj?.transcriptAccession ?? "";
+    this.exons = obj?.exons ?? [];
   }
 }
 
@@ -82,5 +86,101 @@ export class KitReadCounts {
   constructor(obj: IKitReadCounts) {
     this.kitName = obj?.kitName ?? "";
     this.readCounts = obj?.readCounts ?? [];
+  }
+}
+
+export interface IDepthCoverage {
+  depth: number;
+  coverage: number;
+}
+export class DepthCoverage {
+  public depth: number;
+  public coverage: number;
+
+  constructor(obj: IDepthCoverage) {
+    this.depth = obj?.depth ?? 0;
+    this.coverage = obj?.coverage ?? 0;
+  }
+}
+
+export interface IKitDepthCoverages {
+  kitName: string;
+  depthCoverages: DepthCoverage[];
+}
+
+export class KitDepthCoverages {
+  public kitName: string;
+  public depthCoverages: DepthCoverage[];
+
+  constructor(obj: IKitDepthCoverages) {
+    this.kitName = obj?.kitName ?? "";
+    this.depthCoverages = obj?.depthCoverages ?? [];
+  }
+}
+
+export interface IVariants {
+  totalCount: number;
+  pages: number;
+  currentPage: number;
+  variants: Variant[];
+}
+
+export class Variants {
+  public totalCount: number;
+  public pages: number;
+  public currentPage: number;
+  public variants: Variant[];
+
+  constructor(obj: IVariants) {
+    this.totalCount = obj?.totalCount ?? 0;
+    this.pages = obj?.pages ?? 0;
+    this.currentPage = obj?.currentPage ?? 0;
+    this.variants = obj?.variants ?? [];
+  }
+}
+
+export interface IVariant {
+  variantIds: string;
+  clinSig: string;
+  proteinChange: string;
+  chromosome: string;
+  start: number;
+  end: number;
+  depth: number;
+}
+export class Variant {
+  public variantIds: string;
+  public clinSig: string;
+  public proteinChange: string;
+  public chromosome: string;
+  public start: number;
+  public end: number;
+  public depth: number;
+
+  constructor(obj: IVariant) {
+    this.variantIds = obj?.variantIds ?? "";
+    this.clinSig = obj?.clinSig ?? "";
+    this.proteinChange = obj?.proteinChange ?? "";
+    this.chromosome = obj?.chromosome ?? "";
+    this.start = obj?.start ?? 0;
+    this.end = obj?.end ?? 0;
+    this.depth = obj?.depth ?? 0;
+  }
+}
+
+export interface IBAMFile {
+  name: string;
+  size: number;
+  SHA256Sum: string;
+}
+export class BAMFile {
+  public name: string;
+  public size: number;
+  public SHA256Sum: string;
+
+  constructor(obj: IBAMFile) {
+    this.name = obj?.name ?? "";
+    this.size = obj?.size ?? 0;
+    this.SHA256Sum = obj?.SHA256Sum ?? "";
   }
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { Kit, KitReadCounts } from "../../definitions";
+import { Kit, KitDepthCoverages } from "../../definitions";
 import api from "../../services";
 
 import { CircularProgress, Grid, Typography, Zoom } from "@mui/material";
@@ -7,20 +7,22 @@ import { Box } from "@mui/system";
 import { ResponsiveLine } from "@nivo/line";
 import { chartTheme, stringToColor } from "../../theme";
 
-type ReadCountsProps = {
+type DepthCoveragesProps = {
   kits: Kit[];
   exonId: number;
 };
 
-export default ({ kits, exonId }: ReadCountsProps) => {
-  const [chartData, setChartData] = React.useState<KitReadCounts[]>([]);
+export default ({ kits, exonId }: DepthCoveragesProps) => {
+  const [chartData, setChartData] = React.useState<KitDepthCoverages[]>([]);
   const [loaded, setLoaded] = React.useState<Boolean>(false);
 
   React.useEffect(() => {
     setLoaded(false);
     (async () => {
       setChartData(
-        await Promise.all(kits.map((kit) => api.getReadCounts(kit.id, exonId)))
+        await Promise.all(
+          kits.map((kit) => api.getDepthCoverages(kit.id, exonId))
+        )
       );
       setLoaded(true);
     })();
@@ -29,7 +31,7 @@ export default ({ kits, exonId }: ReadCountsProps) => {
   const data = chartData.map((s) => ({
     id: s.kitName,
     color: stringToColor(s.kitName) + "88",
-    data: s.readCounts.map((rc) => ({ x: rc.position, y: rc.avgCount })),
+    data: s.depthCoverages.map((rc) => ({ x: rc.depth, y: rc.coverage })),
   }));
 
   return (
@@ -37,7 +39,7 @@ export default ({ kits, exonId }: ReadCountsProps) => {
       <Grid container justifyContent="space-between">
         <Grid item>
           <Typography variant="h6" gutterBottom>
-            Sequencing depth
+            Coverage by depth
           </Typography>
         </Grid>
         <Grid item>
@@ -52,14 +54,15 @@ export default ({ kits, exonId }: ReadCountsProps) => {
             colors={{ datum: "color" }}
             enablePoints={false}
             curve="monotoneX"
-            enableGridX={false}
+            enableGridX={true}
+            gridXValues={[30]}
             enableGridY={false}
             margin={{ top: 5, right: 10, bottom: 50, left: 50 }}
             xScale={{ type: "linear", min: "auto", max: "auto" }}
             yScale={{
               type: "linear",
               min: 0,
-              max: "auto",
+              max: 100,
             }}
             yFormat=" >-.2f"
             axisTop={null}
@@ -70,8 +73,7 @@ export default ({ kits, exonId }: ReadCountsProps) => {
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: 0,
-                tickValues: 2,
-                legend: "Position",
+                legend: "Mean depth",
                 legendOffset: 36,
                 legendPosition: "middle",
                 format: function (value: number) {
@@ -85,7 +87,7 @@ export default ({ kits, exonId }: ReadCountsProps) => {
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: 0,
-                legend: "Mean read depth",
+                legend: "Coverage %",
                 legendOffset: -40,
                 legendPosition: "middle",
               } as any
@@ -108,8 +110,7 @@ export default ({ kits, exonId }: ReadCountsProps) => {
                   }}
                 >
                   <div>
-                    Mean depth at position{" "}
-                    {slice.points[0].data.x.toLocaleString()}
+                    Coverage at {slice.points[0].data.x.toLocaleString()}X
                   </div>
                   {slice.points.map((point: any) => (
                     <div
@@ -119,7 +120,8 @@ export default ({ kits, exonId }: ReadCountsProps) => {
                         padding: "3px 0",
                       }}
                     >
-                      {point.serieId} <strong>[{point.data.yFormatted}]</strong>
+                      {point.serieId}{" "}
+                      <strong>[{point.data.yFormatted}%]</strong>
                     </div>
                   ))}
                 </div>

@@ -1,10 +1,10 @@
 import { CssBaseline } from "@mui/material";
-import "./styles/main.scss";
+import "./../styles/main.scss";
 
 import { ThemeProvider } from "@mui/material/styles";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import Index from "./components/Index";
-import theme from "./theme";
+import { theme } from "../theme";
+import Index from "./Index";
 
 function App() {
   return (
@@ -15,7 +15,6 @@ function App() {
           <Route path="/">
             <Route index element={<Index />} />
           </Route>
-          {/* <Route exact path="/results" component={Results} /> */}
           <Route path="*" element={<h1>Not found</h1>} />
         </Routes>
       </BrowserRouter>

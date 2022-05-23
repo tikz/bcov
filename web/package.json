@@ -1,6 +1,6 @@
 {
   "name": "bcov-frontend",
-  "version": "0.2.1-alpha.1-20-ge13913d",
+  "version": "0.3.0-alpha.2-7-g850e962",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.9.0",
@@ -26,7 +26,7 @@
     "react-scripts": "5.0.1",
     "sass": "^1.51.0",
     "sine-waves": "^0.3.0",
-    "string-to-color": "^2.2.2",
+    "string-to-hex-code-color": "^1.0.8",
     "typescript": "^4.6.4",
     "web-vitals": "^2.1.4"
   },

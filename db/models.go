@@ -10,33 +10,34 @@ type Kit struct {
 }
 
 type BAMFile struct {
-	ID                 uint   `gorm:"primarykey"`
-	SHA256Sum          string `gorm:"uniqueIndex"`
-	Size               uint64
-	Name               string
-	KitID              uint
-	ExonDepthCoverages []ExonDepthCoverage `gorm:"constraint:OnDelete:CASCADE;"`
+	ID                 uint                `gorm:"primarykey"`
+	SHA256Sum          string              `gorm:"uniqueIndex"`
+	Size               uint64              `json:"size"`
+	Name               string              `json:"name"`
+	KitID              uint                `json:"-"`
+	ExonDepthCoverages []ExonDepthCoverage `gorm:"constraint:OnDelete:CASCADE;" json:"-"`
 }
 
 type Gene struct {
 	ID                  uint   `gorm:"primarykey" json:"id"`
-	HGNCAccession       string `json:"hgncAccession"`
-	GeneAccession       string `gorm:"index"`
-	Name                string `gorm:"index"`
+	HGNCAccession       string `gorm:"unique" json:"hgncAccession"`
+	GeneAccession       string `gorm:"uniqueIndex" json:"geneAccession"`
+	Name                string `gorm:"uniqueIndex" json:"name"`
 	Description         string `json:"description"`
 	TranscriptAccession string `json:"transcriptAccession"`
 	Exons               []Exon `json:"exons"`
 }
 
 type Exon struct {
-	ID                 uint `gorm:"primarykey" json:"id"`
-	GeneID             uint `json:"-"`
-	Strand             int
+	ID                 uint                `gorm:"primarykey" json:"id"`
+	GeneID             uint                `json:"-"`
+	Strand             int                 `json:"strand"`
 	Chromosome         string              `gorm:"index" json:"chromosome"`
 	Start              uint64              `gorm:"index" json:"start"`
 	End                uint64              `json:"end"`
 	ExonNumber         uint                `json:"exonNumber"`
 	ExonDepthCoverages []ExonDepthCoverage `json:"-"`
+	Variants           []Variant           `json:"-"`
 }
 
 type ExonReadCount struct {
@@ -69,6 +70,21 @@ type DepthCoverage struct {
 	Coverage            uint8 `json:"coverage"`
 }
 
+type Variant struct {
+	ID            uint   `gorm:"primarykey" json:"-"`
+	VariantID     string `gorm:"uniqueIndex" json:"variantId"`
+	Name          string `json:"-"`
+	ClinSig       string `json:"clinSig"`
+	ClinSigSimple int    `json:"-"`
+	ProteinChange string `json:"-"`
+	ReviewStatus  string `json:"-"`
+	Phenotypes    string `json:"-"`
+	Chromosome    string `gorm:"index" json:"chromosome"`
+	Start         uint64 `gorm:"index" json:"start"`
+	End           uint64 `gorm:"index" json:"end"`
+	ExonID        uint   `gorm:"index" json:"-"`
+}
+
 func automigrate() {
-	DB.AutoMigrate(&Kit{}, &BAMFile{}, &Gene{}, &Exon{}, &ExonReadCount{}, &ReadCount{}, &ExonDepthCoverage{}, &DepthCoverage{})
+	DB.AutoMigrate(&Kit{}, &BAMFile{}, &Gene{}, &Exon{}, &ExonReadCount{}, &ReadCount{}, &ExonDepthCoverage{}, &DepthCoverage{}, &Variant{})
 }

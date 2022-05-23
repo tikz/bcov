@@ -1,3 +1,15 @@
+#results {
+  padding: 0;
+}
+
+#results-paper {
+  background-color: #202022;
+}
+
+.MuiSvgIcon-root {
+  vertical-align: middle;
+}
+
 .exon {
   cursor: pointer;
 }
@@ -5,4 +17,68 @@
 .exon.active {
   animation: pulsateglow 1s infinite;
   transform-origin: center center;
+}
+
+#exon-selector {
+  background: #444856;
+}
+
+#variants {
+  margin: 4px 4px;
+  padding: 4px;
+  text-align: justify;
+  min-height: 750px;
+}
+
+.chart-spinner {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.variant-coords {
+  font-size: 12px !important;
+  color: #959595 !important;
+}
+
+.variant-uncertain {
+  color: #9c9c9c !important;
+}
+
+.variant-benign {
+  color: #78c983 !important;
+}
+
+.variant-pathogenic {
+  color: #cd5353 !important;
+}
+
+.variant-depth {
+  text-align: left;
+  width: 45px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.variant-depth .MuiSvgIcon-root {
+  font-size: 16px;
+  margin-right: 2px;
+}
+
+.variant-depth-muted {
+  color: rgb(122, 122, 122);
+  font-weight: normal;
+}
+
+#bam-sources {
+  overflow-y: scroll;
+  max-height: 500px;
+}
+
+#bam-sources .MuiTableCell-root {
+  font-size: 11px !important;
+}
+
+#bam-sources .MuiSvgIcon-root {
+  font-size: 20px !important;
+  margin-right: 2px;
 }

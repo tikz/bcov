@@ -8,9 +8,11 @@ import (
 	"os"
 	"sort"
 
+	"github.com/tikz/bio/clinvar"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
 )
 
@@ -120,6 +122,25 @@ func GetExons() []Exon {
 	})
 
 	return exons
+}
+
+func StoreVariant(allele clinvar.Allele, exonId uint) (variantID uint) {
+	variant := Variant{
+		VariantID:     allele.VariantID,
+		Name:          allele.Name,
+		ClinSig:       allele.ClinSig,
+		ClinSigSimple: allele.ClinSigSimple,
+		ProteinChange: allele.ProteinChange,
+		ReviewStatus:  allele.ReviewStatus,
+		Phenotypes:    allele.Phenotypes,
+		Chromosome:    allele.Chromosome,
+		Start:         allele.Start,
+		End:           allele.End,
+		ExonID:        exonId,
+	}
+	DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&variant)
+
+	return variant.ID
 }
 
 func StoreKit(name string) (kitID uint, created bool) {

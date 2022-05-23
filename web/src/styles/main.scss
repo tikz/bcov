@@ -21,3 +21,36 @@
   text-align: center;
   z-index: 1;
 }
+
+a {
+  color: $primary;
+  text-decoration-style: wavy;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba($primary, 0.4);
+  transition: 0.3s;
+}
+
+a:hover {
+  color: lighten($primary, 10%);
+  text-decoration-color: lighten(rgba($primary, 1), 10%);
+}
+
+a:visited {
+  color: $primary;
+}
+
+.MuiSkeleton-root {
+  animation: fadein 0.4s;
+}
+
+.MuiBackdrop-root {
+  background: #00000033 !important;
+}
+
+.text-muted {
+  color: #9c9c9c !important;
+}
+
+.text-monospace {
+  font-family: monospace !important;
+}

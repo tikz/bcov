@@ -10,8 +10,11 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/tikz/bio/clinvar"
 )
 
 func cliTestDB() {
@@ -33,7 +36,7 @@ func cliTestDB() {
 	fmt.Println("Depth coverages:", count)
 }
 
-func cliExon() {
+func cliRegion() {
 	if *bam == "" {
 		fmt.Println("BAM file required.")
 		os.Exit(1)
@@ -103,6 +106,74 @@ func cliFetchExons() {
 	spinner.Stop(fmt.Sprintf("%d exons in %d genes", exonCount, len(geneExons)))
 }
 
+func cliFetchVariants() {
+	db.ConnectDB()
+
+	spinner := utils.NewSpinner("ClinVar")
+	spinner.Start()
+	spinner.Message("downloading variant_summary.txt")
+	cv, err := clinvar.NewClinVar("/tmp")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	spinner.Message("loading variants")
+
+	// Assign SNPs to exon IDs
+	// sort first for performance reasons
+	exons := db.GetExons()
+	var snps []clinvar.Allele
+
+	for _, alleles := range cv.SNPs {
+		for _, allele := range alleles {
+			snps = append(snps, allele)
+		}
+	}
+
+	sort.SliceStable(snps, func(i, j int) bool {
+		ci := utils.ChromosomeIndex(snps[i].Chromosome)
+		cj := utils.ChromosomeIndex(snps[j].Chromosome)
+
+		if ci < cj {
+			return true
+		}
+		if ci > cj {
+			return false
+		}
+		return snps[i].Start < snps[j].Start
+	})
+
+	count := 0
+	i, j := 0, 0
+
+	for i < len(exons) && j < len(snps) {
+		exon := exons[i]
+		snp := snps[j]
+
+		if exon.Chromosome == snp.Chromosome && snp.Start >= exon.Start && snp.End <= exon.End {
+			spinner.Message(fmt.Sprintf("(%.2f%%) variant: rs%s", 100*float64(count)/float64(len(snps)), snp.VariantID))
+			db.StoreVariant(snp, exon.ID)
+			count++
+		}
+
+		if utils.ChromosomeIndex(exons[i].Chromosome) < utils.ChromosomeIndex(snps[j].Chromosome) {
+			i++
+		}
+
+		if utils.ChromosomeIndex(exons[i].Chromosome) > utils.ChromosomeIndex(snps[j].Chromosome) {
+			j++
+		}
+
+		if snps[j].Start > exons[i].End {
+			i++
+		} else {
+			j++
+		}
+	}
+
+	spinner.Stop(fmt.Sprintf("%d variants", count))
+}
+
 func checkExonsDB() {
 	var count int64
 	db.DB.Model(&db.Exon{}).Count(&count)
@@ -111,7 +182,6 @@ func checkExonsDB() {
 		fmt.Println("No exons found in database. You may want to run -fetch-exons first.")
 		os.Exit(1)
 	}
-
 }
 
 func cliLoadBAM() {

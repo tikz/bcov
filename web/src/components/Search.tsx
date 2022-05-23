@@ -7,25 +7,53 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { createFilterOptions } from "@mui/material/Autocomplete";
-import React from "react";
+import { Box } from "@mui/system";
+import React, { ReactElement } from "react";
 import { useNavigate } from "react-router-dom";
 import { Gene, ISearchResult, Kit } from "../definitions";
 import { Query, useQueryParam } from "../query";
 import api from "../services";
+import { stringToColor } from "../theme";
 import Results from "./Results/Results";
-const stc = require("string-to-color");
 
 export default () => {
   const navigate = useNavigate();
-  const [value, setValue] = React.useState<(ISearchResult | string)[]>([]);
+  const [value, setValue] = React.useState<ISearchResult[]>([]);
   const [inputValue, setInputValue] = React.useState<string>("");
   const [searchOptions, setSearchOptions] = React.useState<ISearchResult[]>([]);
   const [inProgress, setInProgress] = React.useState<boolean>(false);
+  const [helperText, setHelperText] = React.useState<ReactElement | null>(null);
   const [open, setOpen] = React.useState<boolean>(false);
   const handleClose = () => setOpen(false);
 
   let [query, setQuery] = useQueryParam<Query>("q");
+
+  const handleInputChange = (
+    event: React.SyntheticEvent,
+    newInputValue: string
+  ) => {
+    setInputValue(newInputValue);
+  };
+
+  const handleChange = (
+    event: React.SyntheticEvent,
+    newValue: (ISearchResult | string)[]
+  ) => {
+    setSearchOptions([]);
+    setInputValue("");
+
+    // Don't allow more than one gene
+    const lastAdded = newValue[newValue.length - 1];
+    if (lastAdded instanceof Gene) {
+      setValue(
+        newValue.filter(
+          (v) => !(v instanceof Gene) || (v instanceof Gene && v === lastAdded)
+        ) as ISearchResult[]
+      );
+    } else {
+      setValue(newValue as ISearchResult[]);
+    }
+  };
 
   React.useEffect(() => {
     const query: Query = {
@@ -48,16 +76,44 @@ export default () => {
 
       api.search(inputValue).then((r) => {
         setSearchOptions(r);
+        setInProgress(false);
       });
-
-      setInProgress(false);
     }
   }, [inputValue]);
 
-  const filterOptions = createFilterOptions({
-    matchFrom: "any",
-    stringify: (option: ISearchResult) => option.name + option.description,
-  });
+  React.useEffect(() => {
+    const lengthKits = value.filter((v) => v instanceof Kit).length;
+    const lengthGenes = value.filter((v) => v instanceof Gene).length;
+
+    if (lengthKits === 0 && lengthGenes > 0) {
+      setHelperText(
+        <Typography variant="caption" color="secondary">
+          Enter at least one DNA capture kit. To see all available kits, type{" "}
+          <b>:kits</b>
+        </Typography>
+      );
+    }
+
+    if (lengthKits > 0 && lengthGenes === 0) {
+      setHelperText(
+        <Typography variant="caption" color="secondary">
+          Enter a gene or dbSNP id.
+        </Typography>
+      );
+    }
+
+    if (lengthKits > 0 && lengthGenes > 0) {
+      setHelperText(
+        <Typography variant="caption" color="secondary">
+          Ready! you can also keep adding more DNA capture kits for comparison.
+        </Typography>
+      );
+    }
+
+    if (lengthKits === 0 && lengthGenes === 0) {
+      setHelperText(null);
+    }
+  }, [value]);
 
   const handleSubmit = () => {
     setOpen(true);
@@ -76,20 +132,15 @@ export default () => {
               style: { maxHeight: "15rem" },
             }}
             id="search"
-            filterOptions={filterOptions}
+            filterOptions={(options, state) => options}
             options={searchOptions.map((option) => option)}
             isOptionEqualToValue={(option, value) => option.id === value.id}
-            freeSolo
             filterSelectedOptions
+            freeSolo
+            value={value}
             inputValue={inputValue}
-            onInputChange={(event, newInputValue) => {
-              setInputValue(newInputValue);
-            }}
-            onChange={(event, newValue: (string | ISearchResult)[]) => {
-              setSearchOptions([]);
-              setInputValue("");
-              setValue(newValue);
-            }}
+            onInputChange={handleInputChange}
+            onChange={handleChange}
             renderTags={(value, getTagProps) =>
               value.map((option, index) => (
                 <Chip
@@ -102,7 +153,7 @@ export default () => {
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Filter by gene name, Ensembl accession, or capture kit name"
+                label="Filter by gene name, capture kit name, HGNC, Ensembl or dbSNP accessions"
                 variant="outlined"
                 sx={{ width: 500 }}
               />
@@ -145,13 +196,19 @@ export default () => {
             variant="contained"
             color="primary"
             sx={{ height: 56 }}
-            disabled={value.length === 0}
+            disabled={
+              !(
+                value.filter((v) => v instanceof Gene).length > 0 &&
+                value.filter((v) => v instanceof Kit).length > 0
+              )
+            }
             onClick={handleSubmit}
           >
             See coverages
           </Button>
         </Grid>
       </Grid>
+      <Box sx={{ height: 40 }}>{helperText}</Box>
       {open && (
         <Results
           open={open}
@@ -168,10 +225,13 @@ const ChipStyle = (option: ISearchResult) => {
   return {
     variant: "outlined" as "outlined",
     sx: {
-      backgroundColor: stc(option.name) + 33,
+      backgroundColor:
+        option instanceof Kit
+          ? stringToColor(option.name) + "44"
+          : stringToColor(option.name) + "33",
       cursor: "pointer",
       border: 0,
-      boxShadow: option instanceof Kit ? "0 0 10px #f05a63" : "inherit",
+      boxShadow: option instanceof Kit ? "0 0 2px #f05a63" : "inherit",
     },
   };
 };

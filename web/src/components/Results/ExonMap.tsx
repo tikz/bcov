@@ -1,40 +1,36 @@
 import { Slide, Zoom } from "@mui/material";
-import React from "react";
-import { Gene, IRegion } from "../../definitions";
+import { Gene, IExon } from "../../definitions";
+import { stringToColor, theme } from "../../theme";
 
 const width: number = 1120;
 const height: number = 100;
 const padding: number = 20;
 const strokeWidth: number = 1;
-const strokeColor: string = "#8c92a4";
-const fillColor: string = "#f05a63";
+const strokeColor: string = theme.palette.secondary.main;
 
 type ExonMapProps = {
   gene: Gene;
-  setRegion: (region: IRegion) => void;
+  exon: IExon;
+  setExon: (exon: IExon) => void;
 };
 
-export default ({ gene, setRegion }: ExonMapProps) => {
-  const [activeExon, setActiveExon] = React.useState<IRegion>({} as IRegion);
-
-  React.useEffect(() => {
-    setRegion(activeExon);
-  }, [activeExon, setRegion]);
-
-  const sortedRegions = gene.regions.sort(function (a, b) {
-    let x: number = a.exonNumber;
-    let y: number = b.exonNumber;
-    return x < y ? -1 : x > y ? 1 : 0;
+export default ({ gene, exon, setExon }: ExonMapProps) => {
+  const sortedExons = gene.exons.sort(function (a, b) {
+    const x: number = a.exonNumber;
+    const y: number = b.exonNumber;
+    return x < y ? a.strand * -1 : x > y ? a.strand : 0;
   });
-  const chromosome = sortedRegions[0].chromosome;
-  const start = sortedRegions[sortedRegions.length - 1].start;
-  const end = sortedRegions[0].end;
+
+  const chromosome = sortedExons[0].chromosome;
+  const start = sortedExons[0].start;
+  const end = sortedExons[sortedExons.length - 1].end;
   const scaleFactor = (width - padding * 2) / (end - start);
+  const fillColor: string = stringToColor(gene.name) + 44;
 
   return (
     <Zoom in={true} timeout={500}>
       <svg width={width} height={height}>
-        {/* Draw chromosome text, middle and range lines */}
+        {/* Chromosome text, middle and range lines */}
         <text
           x="0"
           y={(height - padding * 2) / 2 + padding + 5}
@@ -66,18 +62,17 @@ export default ({ gene, setRegion }: ExonMapProps) => {
           fill={strokeColor}
         />
 
-        {/* Draw exon rectangles */}
+        {/* Exon rectangles */}
 
-        {sortedRegions.map((exon, i) => {
-          const exonWidth = (exon.end - exon.start) * scaleFactor;
-          const exonStart =
-            width - (exon.start - start) * scaleFactor - exonWidth;
+        {sortedExons.map((e, i) => {
+          const exonWidth = (e.end - e.start) * scaleFactor;
+          const exonStart = (e.start - start) * scaleFactor + padding * 2;
           return (
             <Slide
               direction="left"
               in={true}
-              timeout={i * (3000 / sortedRegions.length)}
-              key={exon.id}
+              timeout={i * (3000 / sortedExons.length)}
+              key={e.id}
             >
               <g>
                 <rect
@@ -87,12 +82,10 @@ export default ({ gene, setRegion }: ExonMapProps) => {
                   y={padding}
                   fill={fillColor}
                   onClick={() => {
-                    setActiveExon(exon);
+                    setExon(e);
                   }}
                   className={
-                    activeExon.exonNumber === exon.exonNumber
-                      ? "exon active"
-                      : "exon"
+                    exon.exonNumber === e.exonNumber ? "exon active" : "exon"
                   }
                 />
 
@@ -102,7 +95,7 @@ export default ({ gene, setRegion }: ExonMapProps) => {
                   textAnchor="start"
                   style={{ fill: "#fff", fontSize: "12px" }}
                 >
-                  {exon.exonNumber}
+                  {e.exonNumber}
                 </text>
 
                 <text
@@ -111,7 +104,7 @@ export default ({ gene, setRegion }: ExonMapProps) => {
                   textAnchor="middle"
                   style={{ fill: "#888", fontSize: "10px" }}
                 >
-                  {exon.end - exon.start} bp
+                  {e.end - e.start + 1} bp
                 </text>
               </g>
             </Slide>
