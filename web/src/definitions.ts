@@ -51,7 +51,7 @@ export class Kit implements ISearchResult {
   constructor(obj: IKit) {
     this.id = obj.id ?? 0;
     this.name = obj.name ?? "";
-    this.description = "DNA capture kit";
+    this.description = "DNA exome probe kit";
   }
 }
 

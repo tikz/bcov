@@ -46,7 +46,7 @@ export default () => {
     if (lengthKits === 0 && lengthGenes + lengthVariants > 0) {
       setHelperText(
         <Typography variant="caption" color="secondary">
-          Enter at least one DNA capture kit. To see all available kits, type{" "}
+          Enter at least one DNA probe kit. To see all available kits, type{" "}
           <b>:kits</b>
         </Typography>
       );
@@ -63,7 +63,7 @@ export default () => {
     if (lengthKits > 0 && lengthGenes + lengthVariants > 0) {
       setHelperText(
         <Typography variant="caption" color="secondary">
-          Ready! you can also keep adding more DNA capture kits for comparison.
+          Ready! you can also keep adding more DNA probes for comparison.
         </Typography>
       );
     }
@@ -140,7 +140,7 @@ export default () => {
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Filter by gene name, capture kit name, HGNC, Ensembl or dbSNP accessions"
+                label="Filter by gene name, capture probe name, HGNC, Ensembl or dbSNP accessions"
                 variant="outlined"
                 sx={{ width: 500 }}
               />

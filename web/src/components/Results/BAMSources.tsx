@@ -54,9 +54,9 @@ export default ({ kits }: BAMSourcesProps) => {
           <Table size="small" aria-label="bams">
             <TableHead>
               <TableRow>
-                <TableCell>Size</TableCell>
+                <TableCell>BAM size</TableCell>
                 <TableCell>SHA256 sum</TableCell>
-                <TableCell align="right">DNA capture kit</TableCell>
+                <TableCell align="right">DNA probe kit</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
