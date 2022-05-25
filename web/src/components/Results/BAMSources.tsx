@@ -54,7 +54,6 @@ export default ({ kits }: BAMSourcesProps) => {
           <Table size="small" aria-label="bams">
             <TableHead>
               <TableRow>
-                <TableCell>File</TableCell>
                 <TableCell>Size</TableCell>
                 <TableCell>SHA256 sum</TableCell>
                 <TableCell align="right">DNA capture kit</TableCell>
@@ -64,7 +63,6 @@ export default ({ kits }: BAMSourcesProps) => {
               {sources.map((sources, i) =>
                 sources.map((bam) => (
                   <TableRow>
-                    <TableCell>{bam.name}</TableCell>
                     <TableCell className="text-muted">
                       {(bam.size / 1024 / 1024 / 1024).toFixed(3)} GB
                     </TableCell>
