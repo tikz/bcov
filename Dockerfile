@@ -1,15 +1,13 @@
-FROM golang:alpine
-RUN apk update && apk add --no-cache git gcc musl-dev nodejs npm
+FROM golang:1.18-alpine as builder
+RUN apk update && apk add --no-cache git gcc musl-dev nodejs npm make
+
 WORKDIR /bcov
 COPY . .
+RUN make
 
-ENV GO111MODULE=on
-RUN go mod tidy
-RUN go build
 
-WORKDIR /bcov/web
-RUN npm install --legacy-peer-deps
-RUN npm run build
+FROM scratch
+COPY --from=builder /bcov/bcov /bcov
+COPY --from=builder /bcov/web/build /web/build
 
-WORKDIR /bcov
-ENTRYPOINT ["/bcov/bcov"]
+ENTRYPOINT ["/bcov", "-web"]

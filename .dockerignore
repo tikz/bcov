@@ -1,5 +1,9 @@
 .github
 .vscode
-*.db
+Dockerfile
+*_Result*
+bams
+*.bam
+*.csv
 web/build
 web/node_modules

@@ -3,9 +3,13 @@ COMMIT = $(shell git rev-parse --short HEAD)
 
 all: build
 
+build: export CGO_ENABLED = 0
+build: export GO111MODULE = on
 build: dep
 	npm version $(VERSION) --prefix web/
+	npm install --legacy-peer-deps --prefix web/
 	npm run build --prefix web/
+	go mod tidy
 	go build -ldflags="-X 'main.Version=$(VERSION)' -X 'main.CommitHash=$(COMMIT)'"
 
 test: dep
