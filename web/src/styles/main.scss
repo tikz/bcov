@@ -54,3 +54,7 @@ a:visited {
 .text-monospace {
   font-family: monospace !important;
 }
+
+.no-select {
+  user-select: none;
+}

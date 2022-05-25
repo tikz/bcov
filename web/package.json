@@ -1,6 +1,6 @@
 {
   "name": "bcov-frontend",
-  "version": "0.3.0-alpha.2-7-g850e962",
+  "version": "0.5.0-beta",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.9.0",
@@ -19,6 +19,7 @@
     "autosuggest-highlight": "^3.2.1",
     "axios": "^0.27.2",
     "jsurl": "^0.1.5",
+    "logrocket": "^3.0.0",
     "nivo": "^0.31.0",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",

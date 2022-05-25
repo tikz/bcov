@@ -4,12 +4,14 @@ import api from "../../services";
 
 import CircleIcon from "@mui/icons-material/Circle";
 import {
+  Box,
   Divider,
   Fade,
   Grid,
   LinearProgress,
   Pagination,
   Stack,
+  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -30,6 +32,7 @@ type VariantsProps = {
 export default ({ kits, exonId }: VariantsProps) => {
   const [kitVariants, setKitVariants] = React.useState<Variant[][]>([]);
   const [variants, setVariants] = React.useState<Variant[]>([]);
+  const [filter, setFilter] = React.useState<string>("");
   const [loaded, setLoaded] = React.useState<Boolean>(false);
 
   const [totalCount, setTotalCount] = React.useState<number>(0);
@@ -40,7 +43,7 @@ export default ({ kits, exonId }: VariantsProps) => {
     setLoaded(false);
     (async () => {
       const kvs: Variants[] = await Promise.all(
-        kits.map((kit) => api.getVariants(kit.id, exonId, page))
+        kits.map((kit) => api.getVariants(kit.id, exonId, page, filter))
       );
       setKitVariants(kvs.map((kv) => kv.variants));
       setVariants(kvs[0].variants);
@@ -48,135 +51,156 @@ export default ({ kits, exonId }: VariantsProps) => {
       setTotalCount(kvs[0].totalCount);
       setLoaded(true);
     })();
-  }, [kits, exonId, page]);
+  }, [kits, exonId, page, filter]);
 
-  if (!loaded) {
-    return (
-      <div id="variants">
-        <LinearProgress />
-      </div>
-    );
-  }
+  React.useEffect(() => {
+    setPage(1);
+  }, [exonId]);
 
-  if (variants.length === 0) {
-    return (
-      <div id="variants">
-        <Typography variant="caption" align="center">
-          No variants found for this exon.
-        </Typography>
-      </div>
-    );
-  }
+  // if (!loaded) {
+  //   return (
+  //     <div id="variants">
+  //       <LinearProgress />
+  //     </div>
+  //   );
+  // }
+
+  const filterID = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value.replace("rs", "");
+    setFilter(value);
+    setPage(1);
+  };
 
   return (
     <div id="variants">
-      <Grid container justifyContent="space-between" alignItems="center">
+      <Grid container direction="column" spacing={1}>
         <Grid item>
-          <Typography variant="h6" gutterBottom>
-            Variants {loaded && `(${totalCount})`}
-          </Typography>
-        </Grid>
-        <Grid item>
-          <Grid container justifyContent="flex-end" spacing={2}>
+          <Grid container justifyContent="space-between" alignItems="center">
             <Grid item>
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={(
-                  event: React.ChangeEvent<unknown>,
-                  value: number
-                ) => {
-                  setPage(value);
-                }}
+              <Typography variant="h6" gutterBottom>
+                Variants {`(${totalCount})`}
+              </Typography>
+            </Grid>
+            <Grid item>
+              <TextField
+                label="dbSNP ID"
+                variant="outlined"
+                onChange={filterID}
+                size="small"
               />
+            </Grid>
+            <Grid item>
+              <Grid container justifyContent="flex-end" spacing={2}>
+                <Grid item>
+                  <Pagination
+                    count={totalPages}
+                    page={page}
+                    onChange={(
+                      event: React.ChangeEvent<unknown>,
+                      value: number
+                    ) => {
+                      setPage(value);
+                    }}
+                  />
+                </Grid>
+              </Grid>
             </Grid>
           </Grid>
         </Grid>
-      </Grid>
 
-      <Fade in={true}>
-        <TableContainer component={Paper}>
-          <Table size="small" aria-label="variants">
-            <TableHead>
-              <TableRow>
-                <TableCell>dbSNP ID</TableCell>
-                <TableCell>Coordinates</TableCell>
-                <TableCell>Protein change</TableCell>
-                <TableCell>Clinical significance</TableCell>
-                <TableCell align="right">Mean read depth</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {variants.map((v, iv) => (
-                <TableRow
-                  key={v.variantIds}
-                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                >
-                  <TableCell component="th" scope="row">
-                    <Stack
-                      direction="row"
-                      divider={<Divider orientation="vertical" flexItem />}
-                      spacing={1}
+        <Grid item>
+          <Box sx={{ height: "5px" }}>{!loaded && <LinearProgress />}</Box>
+          <Fade in={true}>
+            <TableContainer component={Paper}>
+              <Table size="small" aria-label="variants">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>dbSNP ID</TableCell>
+                    <TableCell>Coordinates</TableCell>
+                    <TableCell>Protein change</TableCell>
+                    <TableCell>Clinical significance</TableCell>
+                    <TableCell align="right">Mean read depth</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {variants.map((v, iv) => (
+                    <TableRow
+                      key={v.variantId}
+                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                     >
-                      {v.variantIds.split(",").map((rs) => (
-                        <a
-                          href={`https://www.ncbi.nlm.nih.gov/snp/rs${rs}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          key={rs}
+                      <TableCell component="th" scope="row">
+                        <Stack
+                          direction="row"
+                          divider={<Divider orientation="vertical" flexItem />}
+                          spacing={1}
                         >
-                          rs{rs}
-                        </a>
-                      ))}
-                    </Stack>
-                  </TableCell>
-                  <TableCell className="variant-coords">
-                    {v.start === v.end
-                      ? `chr${v.chromosome}:${v.start.toLocaleString()}`
-                      : `chr${
-                          v.chromosome
-                        }:${v.start.toLocaleString()}-${v.end.toLocaleString()} (${
-                          v.end - v.start + 1
-                        } bp)`}
-                  </TableCell>
-                  <TableCell>{v.proteinChange}</TableCell>
-                  <TableCell className={variantColorClass(v.clinSig)}>
-                    {v.clinSig}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Stack
-                      direction="row"
-                      divider={<Divider orientation="vertical" flexItem />}
-                      spacing={1}
-                      justifyContent="flex-end"
-                    >
-                      {kits.map((k, ik) => {
-                        const depth = kitVariants[ik][iv].depth;
-                        return (
-                          <Tooltip title={k.name} arrow>
-                            <div
-                              className={`variant-depth ${
-                                depth < 30 ? "variant-depth-muted" : ""
-                              }`}
-                            >
-                              <CircleIcon
-                                sx={{
-                                  color: stringToColor(k.name) + 88,
-                                }}
-                              />
-                              {depth}
-                            </div>
-                          </Tooltip>
-                        );
-                      })}
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Fade>
+                          <a
+                            href={`https://www.ncbi.nlm.nih.gov/snp/rs${v.variantId}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            key={v.variantId}
+                          >
+                            rs{v.variantId}
+                          </a>
+                        </Stack>
+                      </TableCell>
+                      <TableCell className="variant-coords">
+                        {v.start === v.end
+                          ? `chr${v.chromosome}:${v.start.toLocaleString()}`
+                          : `chr${
+                              v.chromosome
+                            }:${v.start.toLocaleString()}-${v.end.toLocaleString()} (${
+                              v.end - v.start + 1
+                            } bp)`}
+                      </TableCell>
+                      <TableCell>{v.proteinChange}</TableCell>
+                      <TableCell className={variantColorClass(v.clinSig)}>
+                        {v.clinSig}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Stack
+                          direction="row"
+                          divider={<Divider orientation="vertical" flexItem />}
+                          spacing={1}
+                          justifyContent="flex-end"
+                        >
+                          {kits.map((k, ik) => {
+                            const depth = kitVariants[ik][iv].depth;
+                            return (
+                              <Tooltip title={k.name} arrow>
+                                <div
+                                  className={`variant-depth ${
+                                    depth < 30 ? "variant-depth-muted" : ""
+                                  }`}
+                                >
+                                  <CircleIcon
+                                    sx={{
+                                      color: stringToColor(k.name) + 88,
+                                    }}
+                                  />
+                                  {depth}
+                                </div>
+                              </Tooltip>
+                            );
+                          })}
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Fade>
+
+          {loaded && variants.length === 0 && (
+            <div id="variants">
+              <Typography variant="caption" align="center">
+                No variants found for this exon.
+              </Typography>
+            </div>
+          )}
+        </Grid>
+      </Grid>
     </div>
   );
 };

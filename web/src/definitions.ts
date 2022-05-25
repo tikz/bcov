@@ -140,7 +140,7 @@ export class Variants {
 }
 
 export interface IVariant {
-  variantIds: string;
+  variantId: string;
   clinSig: string;
   proteinChange: string;
   chromosome: string;
@@ -149,7 +149,7 @@ export interface IVariant {
   depth: number;
 }
 export class Variant {
-  public variantIds: string;
+  public variantId: string;
   public clinSig: string;
   public proteinChange: string;
   public chromosome: string;
@@ -158,7 +158,7 @@ export class Variant {
   public depth: number;
 
   constructor(obj: IVariant) {
-    this.variantIds = obj?.variantIds ?? "";
+    this.variantId = obj?.variantId ?? "";
     this.clinSig = obj?.clinSig ?? "";
     this.proteinChange = obj?.proteinChange ?? "";
     this.chromosome = obj?.chromosome ?? "";

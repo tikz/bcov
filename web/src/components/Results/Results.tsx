@@ -7,6 +7,7 @@ import {
   Fade,
   Grid,
   Paper,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
@@ -204,7 +205,11 @@ export default ({ open, onClose, genes, kits }: ResultsProps) => {
                     </Grid>
                     <Grid item>
                       <Box sx={{ width: 100 }}>
-                        <Typography variant="h5" align="center">
+                        <Typography
+                          variant="h5"
+                          align="center"
+                          className="no-select"
+                        >
                           Exon #{exon.exonNumber}
                         </Typography>
                       </Box>
@@ -282,12 +287,17 @@ export default ({ open, onClose, genes, kits }: ResultsProps) => {
               <BAMSources kits={kits} />
             </Grid>
             <Grid item>
-              <Button
-                variant="outlined"
-                href={`/api/variants-csv/${gene.name}`}
+              <Tooltip
+                title={`Export all kit depths for variants of all ${gene.name} exons`}
+                arrow
               >
-                Export CSV
-              </Button>
+                <Button
+                  variant="outlined"
+                  href={`/api/variants-csv/${gene.name}`}
+                >
+                  Export CSV
+                </Button>
+              </Tooltip>
             </Grid>
           </Grid>
         </Paper>

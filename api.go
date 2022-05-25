@@ -5,18 +5,23 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
+	"math"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+
+	cache "github.com/chenyahui/gin-cache"
+	"github.com/chenyahui/gin-cache/persist"
 )
 
 type Variant struct {
-	VariantIDs    string `json:"variantIds"`
+	VariantID     string `json:"variantId"`
 	ClinSig       string `json:"clinSig"`
 	ProteinChange string `json:"proteinChange"`
 	Chromosome    string `json:"chromosome"`
@@ -207,10 +212,17 @@ func DepthCoveragesEndpoint(c *gin.Context) {
 	c.JSON(http.StatusOK, Response{KitName: kit.Name, DepthCoverages: depthCoverages})
 }
 
-func queryExonVariants(kitId int, exonId int) []Variant {
+func queryExonVariants(kitId int, exonId int, filterId string) []Variant {
+	var filterQuery string
+	if filterId == "" {
+		filterQuery = ""
+	} else {
+		filterQuery = fmt.Sprintf("AND v.variant_id = %s", filterId)
+	}
+
 	variants := make([]Variant, 0)
-	db.DB.Raw(`
-			SELECT GROUP_CONCAT(v.variant_id) variant_ids, v.clin_sig, v.protein_change, v.chromosome, v.start, v.end, (SELECT * FROM (SELECT round(avg(rc.count))
+	db.DB.Raw(fmt.Sprintf(`
+			SELECT variant_id, v.clin_sig, v.protein_change, v.chromosome, v.start, v.end, (SELECT * FROM (SELECT round(avg(rc.count))
 			FROM read_counts rc
 			INNER JOIN exon_read_counts erc on rc.exon_read_count_id = erc.id AND erc.exon_id = ?
 			INNER JOIN bam_files bf on erc.bam_file_id = bf.id AND bf.kit_id = ?
@@ -227,11 +239,10 @@ func queryExonVariants(kitId int, exonId int) []Variant {
 			LIMIT 10)
 			LIMIT 1) as depth FROM variants v
 			
-			WHERE v.exon_id = ?
+			WHERE v.exon_id = ? %s
 			
-			GROUP BY start, end
 			ORDER BY v.start
-	`, exonId, kitId, exonId, kitId, exonId).Scan(&variants)
+	`, filterQuery), exonId, kitId, exonId, kitId, exonId, filterId).Scan(&variants)
 
 	return variants
 }
@@ -239,11 +250,12 @@ func queryExonVariants(kitId int, exonId int) []Variant {
 func VariantsEndpoint(c *gin.Context) {
 	kitId, _ := strconv.Atoi(c.Param("kit_id"))
 	exonId, _ := strconv.Atoi(c.Param("exon_id"))
+	filterId := c.DefaultQuery("filter_id", "")
 	pageParam := c.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	perPage := 20
 
-	variants := queryExonVariants(kitId, exonId)
+	variants := queryExonVariants(kitId, exonId, filterId)
 
 	start := (page - 1) * perPage
 	if start > len(variants) {
@@ -254,7 +266,7 @@ func VariantsEndpoint(c *gin.Context) {
 		end = len(variants)
 	}
 
-	c.JSON(http.StatusOK, VariantsResult{TotalCount: len(variants), Pages: len(variants)/perPage + 1, CurrentPage: page, Variants: variants[start:end]})
+	c.JSON(http.StatusOK, VariantsResult{TotalCount: len(variants), Pages: int(math.Ceil(float64(len(variants)) / float64(perPage))), CurrentPage: page, Variants: variants[start:end]})
 }
 
 func VariantsCSVEndpoint(c *gin.Context) {
@@ -271,7 +283,7 @@ func VariantsCSVEndpoint(c *gin.Context) {
 	for _, kit := range kits {
 		kitVariants := make([]Variant, 0)
 		for _, exon := range gene.Exons {
-			kitVariants = append(kitVariants, queryExonVariants(int(kit.ID), int(exon.ID))...)
+			kitVariants = append(kitVariants, queryExonVariants(int(kit.ID), int(exon.ID), "")...)
 		}
 
 		variants = append(variants, kitVariants)
@@ -287,7 +299,7 @@ func VariantsCSVEndpoint(c *gin.Context) {
 	writer.Write(header)
 
 	for i, variant := range variants[0] {
-		line := []string{"rs" + variant.VariantIDs, variant.ClinSig, variant.ProteinChange, variant.Chromosome, fmt.Sprint(variant.Start), fmt.Sprint(variant.End)}
+		line := []string{"rs" + variant.VariantID, variant.ClinSig, variant.ProteinChange, variant.Chromosome, fmt.Sprint(variant.Start), fmt.Sprint(variant.End)}
 		for j := range kits {
 			line = append(line, fmt.Sprint(variants[j][i].Depth))
 		}
@@ -316,6 +328,9 @@ func BAMsEndpoint(c *gin.Context) {
 func runWebServer() {
 	db.ConnectDB()
 
+	cacheDuration := 24 * 7 * time.Hour
+	memoryStore := persist.NewMemoryStore(cacheDuration)
+
 	r := gin.Default()
 	r.Use(cors.Default())
 
@@ -325,14 +340,14 @@ func runWebServer() {
 	r.GET("/api/kit/:id", GeneEndpoint)
 	r.GET("/api/gene/:id", GeneEndpoint)
 
-	r.GET("/api/search/genes/:name", SearchGenesEndpoint)
-	r.GET("/api/search/kits/:name", SearchKitsEndpoint)
+	r.GET("/api/search/genes/:name", cache.CacheByRequestURI(memoryStore, cacheDuration), SearchGenesEndpoint)
+	r.GET("/api/search/kits/:name", cache.CacheByRequestURI(memoryStore, cacheDuration), SearchKitsEndpoint)
 
-	r.GET("/api/reads/:kit_id/:exon_id", ReadsEndpoint)
-	r.GET("/api/depth-coverages/:kit_id/:exon_id", DepthCoveragesEndpoint)
-	r.GET("/api/variants/:kit_id/:exon_id", VariantsEndpoint)
+	r.GET("/api/reads/:kit_id/:exon_id", cache.CacheByRequestURI(memoryStore, cacheDuration), ReadsEndpoint)
+	r.GET("/api/depth-coverages/:kit_id/:exon_id", cache.CacheByRequestURI(memoryStore, cacheDuration), DepthCoveragesEndpoint)
+	r.GET("/api/variants/:kit_id/:exon_id", cache.CacheByRequestURI(memoryStore, cacheDuration), VariantsEndpoint)
 	r.GET("/api/bams/:kit_id", BAMsEndpoint)
-	r.GET("/api/variants-csv/:gene_name", VariantsCSVEndpoint)
+	r.GET("/api/variants-csv/:gene_name", cache.CacheByRequestURI(memoryStore, cacheDuration), VariantsCSVEndpoint)
 
 	r.NoRoute(func(c *gin.Context) {
 		c.File("web/build/index.html")

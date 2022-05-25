@@ -7,7 +7,7 @@ import {
   Kit,
   KitDepthCoverages,
   KitReadCounts,
-  Variants,
+  Variants
 } from "./definitions";
 
 const search = async (pattern: string) => {
@@ -51,8 +51,8 @@ const getDepthCoverages = async (kitId: number, exonId: number) => {
   return new KitDepthCoverages(await r.json());
 };
 
-const getVariants = async (kitId: number, exonId: number, page: number) => {
-  const r = await fetch(`/api/variants/${kitId}/${exonId}?page=${page}`);
+const getVariants = async (kitId: number, exonId: number, page: number, filter: string) => {
+  const r = await fetch(`/api/variants/${kitId}/${exonId}?page=${page}&filter_id=${filter}`);
   return new Variants(await r.json());
 };
 
