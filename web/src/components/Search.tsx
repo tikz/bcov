@@ -32,11 +32,15 @@ export default () => {
       setInProgress(true);
 
       api.search(inputValue).then((r) => {
+        if (inputValue === ":kits") {
+          setValue(value.filter((v) => !(v instanceof Kit)).concat(r));
+          setInputValue("");
+        }
         setSearchOptions(r);
         setInProgress(false);
       });
     }
-  }, [inputValue]);
+  }, [inputValue, value]);
 
   React.useEffect(() => {
     if (lengthKits === 0 && lengthGenes + lengthVariants > 0) {
@@ -117,6 +121,7 @@ export default () => {
             isOptionEqualToValue={(option, value) => option.id === value.id}
             filterSelectedOptions
             freeSolo
+            autoHighlight={true}
             value={value}
             inputValue={inputValue}
             onInputChange={handleInputChange}
@@ -198,37 +203,16 @@ export default () => {
 };
 
 const ChipStyle = (option: ISearchResult) => {
-  if (option instanceof Kit) {
-    return {
-      variant: "outlined" as "outlined",
-      sx: {
-        backgroundColor: stringToColor(option.name) + "44",
-        cursor: "pointer",
-        border: 0,
-        boxShadow: "0 0 2px #f05a63",
-      },
-    };
-  }
-
-  if (option instanceof Variant) {
-    return {
-      variant: "outlined" as "outlined",
-      sx: {
-        backgroundColor: "#555",
-        cursor: "pointer",
-        border: 0,
-        boxShadow: "inherit",
-      },
-    };
-  }
-
   return {
     variant: "outlined" as "outlined",
     sx: {
-      backgroundColor: stringToColor(option.name) + "33",
+      backgroundColor:
+        stringToColor(
+          option instanceof Variant ? option.gene.name : option.name
+        ) + "44",
       cursor: "pointer",
       border: 0,
-      boxShadow: "inherit",
+      boxShadow: option instanceof Kit ? "0 0 2px #f05a63" : "inherit",
     },
   };
 };

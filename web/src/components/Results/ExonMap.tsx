@@ -2,7 +2,7 @@ import { Slide, Zoom } from "@mui/material";
 import { Gene, IExon } from "../../definitions";
 import { stringToColor, theme } from "../../theme";
 
-const width: number = 1120;
+const width: number = 1148;
 const height: number = 100;
 const padding: number = 20;
 const strokeWidth: number = 1;
@@ -29,7 +29,7 @@ export default ({ gene, exon, setExon }: ExonMapProps) => {
 
   return (
     <Zoom in={true} timeout={500}>
-      <svg width={width} height={height}>
+      <svg width={width + 20} height={height + 20}>
         {/* Chromosome text, middle and range lines */}
         <text
           x="0"
@@ -48,7 +48,7 @@ export default ({ gene, exon, setExon }: ExonMapProps) => {
           fill={strokeColor}
         />
         <rect
-          width={width}
+          width={width - 2 * padding}
           height={strokeWidth}
           x={padding * 2}
           y={(height - padding * 2) / 2 + padding}
@@ -88,24 +88,36 @@ export default ({ gene, exon, setExon }: ExonMapProps) => {
                     exon.exonNumber === e.exonNumber ? "exon active" : "exon"
                   }
                 />
+                {(sortedExons.length < 30 || i % 5 === 0) && (
+                  <text
+                    x={exonStart + exonWidth / 2 - 3}
+                    y={padding - 6}
+                    textAnchor="start"
+                    style={{ fill: "#fff", fontSize: "12px" }}
+                  >
+                    {e.exonNumber}
+                  </text>
+                )}
 
-                <text
-                  x={exonStart + exonWidth / 2 - 3}
-                  y={padding - 6}
-                  textAnchor="start"
-                  style={{ fill: "#fff", fontSize: "12px" }}
-                >
-                  {e.exonNumber}
-                </text>
-
-                <text
-                  x={exonStart + exonWidth / 2}
-                  y={height - padding + 12}
-                  textAnchor="middle"
-                  style={{ fill: "#888", fontSize: "10px" }}
-                >
-                  {e.end - e.start + 1} bp
-                </text>
+                {sortedExons.length < 30 && (
+                  <g>
+                    <rect
+                      width={1}
+                      height={(i % 3) * 12}
+                      x={exonStart + exonWidth / 2}
+                      y={padding + height - padding * 2 + 2}
+                      fill="#88888855"
+                    />
+                    <text
+                      x={exonStart + exonWidth / 2}
+                      y={height - padding + 12 + (i % 3) * 12}
+                      textAnchor="middle"
+                      style={{ fill: "#88888899", fontSize: "10px" }}
+                    >
+                      {e.end - e.start + 1} bp
+                    </text>
+                  </g>
+                )}
               </g>
             </Slide>
           );

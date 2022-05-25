@@ -8,7 +8,7 @@ import {
   Grid,
   Paper,
   Tooltip,
-  Typography
+  Typography,
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import { Box } from "@mui/system";
@@ -31,7 +31,6 @@ type ResultsProps = {
 };
 
 export default ({ open, onClose, genes, kits, variants }: ResultsProps) => {
-  console.log(genes, kits, variants);
   const [gene, setGene] = React.useState<Gene>(
     variants.length > 0 ? variants[0].gene : genes[0]
   );
@@ -294,7 +293,9 @@ export default ({ open, onClose, genes, kits, variants }: ResultsProps) => {
                   <Variants
                     kits={kits}
                     exonId={exon.id}
-                    variantFilter={variants.length > 0 ? "rs"+variants[0].id : ""}
+                    variantFilter={
+                      variants.length > 0 ? "rs" + variants[0].id : ""
+                    }
                   />
                 )}
               </Paper>
