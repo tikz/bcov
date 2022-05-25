@@ -1,0 +1,5 @@
+.github
+.vscode
+*.db
+web/build
+web/node_modules

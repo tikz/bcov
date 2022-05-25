@@ -8,7 +8,7 @@ RUN go mod tidy
 RUN go build
 
 WORKDIR /bcov/web
-RUN npm install
+RUN npm install --legacy-peer-deps
 RUN npm run build
 
 WORKDIR /bcov
