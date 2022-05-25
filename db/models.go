@@ -82,7 +82,7 @@ type Variant struct {
 	Chromosome    string `gorm:"index" json:"chromosome"`
 	Start         uint64 `gorm:"index" json:"start"`
 	End           uint64 `gorm:"index" json:"end"`
-	ExonID        uint   `gorm:"index" json:"-"`
+	ExonID        uint   `gorm:"index" json:"exonId"`
 }
 
 func automigrate() {

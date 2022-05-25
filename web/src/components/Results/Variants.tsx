@@ -27,12 +27,13 @@ import { stringToColor } from "../../theme";
 type VariantsProps = {
   kits: Kit[];
   exonId: number;
+  variantFilter: string;
 };
 
-export default ({ kits, exonId }: VariantsProps) => {
+export default ({ kits, exonId, variantFilter }: VariantsProps) => {
   const [kitVariants, setKitVariants] = React.useState<Variant[][]>([]);
   const [variants, setVariants] = React.useState<Variant[]>([]);
-  const [filter, setFilter] = React.useState<string>("");
+  const [filter, setFilter] = React.useState<string>(variantFilter);
   const [loaded, setLoaded] = React.useState<Boolean>(false);
 
   const [totalCount, setTotalCount] = React.useState<number>(0);
@@ -43,7 +44,9 @@ export default ({ kits, exonId }: VariantsProps) => {
     setLoaded(false);
     (async () => {
       const kvs: Variants[] = await Promise.all(
-        kits.map((kit) => api.getVariants(kit.id, exonId, page, filter))
+        kits.map((kit) =>
+          api.getVariants(kit.id, exonId, page, filter.replace("rs", ""))
+        )
       );
       setKitVariants(kvs.map((kv) => kv.variants));
       setVariants(kvs[0].variants);
@@ -57,39 +60,31 @@ export default ({ kits, exonId }: VariantsProps) => {
     setPage(1);
   }, [exonId]);
 
-  // if (!loaded) {
-  //   return (
-  //     <div id="variants">
-  //       <LinearProgress />
-  //     </div>
-  //   );
-  // }
-
   const filterID = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value.replace("rs", "");
-    setFilter(value);
+    setFilter(event.target.value);
     setPage(1);
   };
 
   return (
     <div id="variants">
-      <Grid container direction="column" spacing={1}>
+      <Grid container direction="column">
         <Grid item>
           <Grid container justifyContent="space-between" alignItems="center">
-            <Grid item>
+            <Grid item md={2}>
               <Typography variant="h6" gutterBottom>
                 Variants {`(${totalCount})`}
               </Typography>
             </Grid>
-            <Grid item>
+            <Grid item md={2}>
               <TextField
                 label="dbSNP ID"
                 variant="outlined"
                 onChange={filterID}
+                value={filter}
                 size="small"
               />
             </Grid>
-            <Grid item>
+            <Grid item md={4}>
               <Grid container justifyContent="flex-end" spacing={2}>
                 <Grid item>
                   <Pagination
@@ -125,7 +120,7 @@ export default ({ kits, exonId }: VariantsProps) => {
                 <TableBody>
                   {variants.map((v, iv) => (
                     <TableRow
-                      key={v.variantId}
+                      key={v.id}
                       sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                     >
                       <TableCell component="th" scope="row">
@@ -135,12 +130,12 @@ export default ({ kits, exonId }: VariantsProps) => {
                           spacing={1}
                         >
                           <a
-                            href={`https://www.ncbi.nlm.nih.gov/snp/rs${v.variantId}`}
+                            href={`https://www.ncbi.nlm.nih.gov/snp/rs${v.id}`}
                             target="_blank"
                             rel="noreferrer"
-                            key={v.variantId}
+                            key={v.id}
                           >
-                            rs{v.variantId}
+                            rs{v.id}
                           </a>
                         </Stack>
                       </TableCell>

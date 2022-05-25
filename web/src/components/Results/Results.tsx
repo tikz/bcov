@@ -8,12 +8,12 @@ import {
   Grid,
   Paper,
   Tooltip,
-  Typography,
+  Typography
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import { Box } from "@mui/system";
 import React from "react";
-import { Gene, IExon, Kit } from "../../definitions";
+import { Gene, IExon, Kit, Variant } from "../../definitions";
 import api from "../../services";
 import { stringToColor } from "../../theme";
 import BAMSources from "./BAMSources";
@@ -27,18 +27,28 @@ type ResultsProps = {
   onClose: () => void;
   genes: Gene[];
   kits: Kit[];
+  variants: Variant[];
 };
 
-export default ({ open, onClose, genes, kits }: ResultsProps) => {
-  const [gene, setGene] = React.useState<Gene>(genes[0]);
+export default ({ open, onClose, genes, kits, variants }: ResultsProps) => {
+  console.log(genes, kits, variants);
+  const [gene, setGene] = React.useState<Gene>(
+    variants.length > 0 ? variants[0].gene : genes[0]
+  );
   const [exon, setExon] = React.useState<IExon | undefined>(undefined);
 
   React.useEffect(() => {
     api.getGene(gene.id).then((g: Gene) => {
       setGene(g);
-      setExon(g.exons[0]);
+      if (variants.length > 0) {
+        setExon(
+          g.exons.filter((e) => e.exonNumber === variants[0].exonNumber)[0]
+        );
+      } else {
+        setExon(g.exons[0]);
+      }
     });
-  }, [genes, gene.id]);
+  }, [genes, variants, gene.id]);
 
   return (
     <Dialog
@@ -150,17 +160,19 @@ export default ({ open, onClose, genes, kits }: ResultsProps) => {
                     </Typography>
                   </Grid>
 
-                  <Grid item>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: "text.secondary" }}
-                    >
-                      {gene.exons.length > 0 && gene.exons[0].strand === 1
-                        ? "forward"
-                        : "reverse"}{" "}
-                      strand
-                    </Typography>
-                  </Grid>
+                  {exon && (
+                    <Grid item>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: "text.secondary" }}
+                      >
+                        {gene.exons.length > 0 && gene.exons[0].strand === 1
+                          ? "forward"
+                          : "reverse"}{" "}
+                        strand
+                      </Typography>
+                    </Grid>
+                  )}
                 </Grid>
               </Grid>
             </Grid>
@@ -278,7 +290,13 @@ export default ({ open, onClose, genes, kits }: ResultsProps) => {
           <Grid container spacing={1}>
             <Grid item xs={12}>
               <Paper elevation={4} sx={{ padding: "1rem", marginTop: 2 }}>
-                {exon && <Variants kits={kits} exonId={exon.id} />}
+                {exon && (
+                  <Variants
+                    kits={kits}
+                    exonId={exon.id}
+                    variantFilter={variants.length > 0 ? "rs"+variants[0].id : ""}
+                  />
+                )}
               </Paper>
             </Grid>
           </Grid>

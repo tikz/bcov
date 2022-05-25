@@ -4,20 +4,24 @@ import {
   IBAMFile,
   IGene,
   IKit,
+  IVariant,
   Kit,
   KitDepthCoverages,
   KitReadCounts,
-  Variants
+  Variant,
+  Variants,
 } from "./definitions";
 
 const search = async (pattern: string) => {
-  const [kits, genes] = await Promise.all([
+  const [kits, genes, variants] = await Promise.all([
     fetch(`/api/search/kits/${pattern}`).then((r) => r.json()),
     fetch(`/api/search/genes/${pattern}`).then((r) => r.json()),
+    fetch(`/api/search/variant/${pattern}`).then((r) => r.json()),
   ]);
   return [
     ...kits.map((k: IKit) => new Kit(k)),
     ...genes.map((g: IGene) => new Gene(g)),
+    ...variants.map((v: IVariant) => new Variant(v)),
   ];
 };
 
@@ -51,8 +55,15 @@ const getDepthCoverages = async (kitId: number, exonId: number) => {
   return new KitDepthCoverages(await r.json());
 };
 
-const getVariants = async (kitId: number, exonId: number, page: number, filter: string) => {
-  const r = await fetch(`/api/variants/${kitId}/${exonId}?page=${page}&filter_id=${filter}`);
+const getVariants = async (
+  kitId: number,
+  exonId: number,
+  page: number,
+  filter: string
+) => {
+  const r = await fetch(
+    `/api/variants/${kitId}/${exonId}?page=${page}&filter_id=${filter}`
+  );
   return new Variants(await r.json());
 };
 

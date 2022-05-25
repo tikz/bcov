@@ -20,6 +20,21 @@ export interface IGene extends ISearchResult {
   exons: IExon[];
 }
 
+export interface IVariant extends ISearchResult {
+  variantId: string;
+  name: string;
+  exonNumber: number;
+  gene: IGene;
+  geneName: string;
+  geneId: number;
+  clinSig: string;
+  proteinChange: string;
+  chromosome: string;
+  start: number;
+  end: number;
+  depth: number;
+}
+
 export interface IExon {
   id: number;
   chromosome: string;
@@ -139,17 +154,14 @@ export class Variants {
   }
 }
 
-export interface IVariant {
-  variantId: string;
-  clinSig: string;
-  proteinChange: string;
-  chromosome: string;
-  start: number;
-  end: number;
-  depth: number;
-}
 export class Variant {
-  public variantId: string;
+  public id: number;
+  public name: string;
+  public exonNumber: number;
+  public gene: Gene;
+  public geneName: string;
+  public geneId: number;
+  public description: string;
   public clinSig: string;
   public proteinChange: string;
   public chromosome: string;
@@ -158,7 +170,13 @@ export class Variant {
   public depth: number;
 
   constructor(obj: IVariant) {
-    this.variantId = obj?.variantId ?? "";
+    this.id = obj?.id ?? 0;
+    this.name = "rs" + this.id;
+    this.exonNumber = obj?.exonNumber ?? 0;
+    this.gene = obj?.gene ?? ({} as IGene);
+    this.geneName = obj?.geneName ?? "";
+    this.geneId = obj?.geneId ?? 0;
+    this.description = `${this.geneName} Exon ${this.exonNumber} variant`;
     this.clinSig = obj?.clinSig ?? "";
     this.proteinChange = obj?.proteinChange ?? "";
     this.chromosome = obj?.chromosome ?? "";

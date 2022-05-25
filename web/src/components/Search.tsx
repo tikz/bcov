@@ -9,69 +9,26 @@ import {
 } from "@mui/material";
 import { Box } from "@mui/system";
 import React, { ReactElement } from "react";
-import { useNavigate } from "react-router-dom";
-import { Gene, ISearchResult, Kit } from "../definitions";
-import { Query, useQueryParam } from "../query";
+import { Gene, ISearchResult, Kit, Variant } from "../definitions";
 import api from "../services";
 import { stringToColor } from "../theme";
 import Results from "./Results/Results";
 
 export default () => {
-  const navigate = useNavigate();
   const [value, setValue] = React.useState<ISearchResult[]>([]);
   const [inputValue, setInputValue] = React.useState<string>("");
   const [searchOptions, setSearchOptions] = React.useState<ISearchResult[]>([]);
   const [inProgress, setInProgress] = React.useState<boolean>(false);
   const [helperText, setHelperText] = React.useState<ReactElement | null>(null);
   const [open, setOpen] = React.useState<boolean>(false);
-  const handleClose = () => setOpen(false);
 
-  let [query, setQuery] = useQueryParam<Query>("q");
+  const lengthKits = value.filter((v) => v instanceof Kit).length;
+  const lengthGenes = value.filter((v) => v instanceof Gene).length;
+  const lengthVariants = value.filter((v) => v instanceof Variant).length;
 
-  const handleInputChange = (
-    event: React.SyntheticEvent,
-    newInputValue: string
-  ) => {
-    setInputValue(newInputValue);
-  };
-
-  const handleChange = (
-    event: React.SyntheticEvent,
-    newValue: (ISearchResult | string)[]
-  ) => {
+  React.useEffect(() => {
     setSearchOptions([]);
-    setInputValue("");
-
-    // Don't allow more than one gene
-    const lastAdded = newValue[newValue.length - 1];
-    if (lastAdded instanceof Gene) {
-      setValue(
-        newValue.filter(
-          (v) => !(v instanceof Gene) || (v instanceof Gene && v === lastAdded)
-        ) as ISearchResult[]
-      );
-    } else {
-      setValue(newValue as ISearchResult[]);
-    }
-  };
-
-  React.useEffect(() => {
-    const query: Query = {
-      geneIds: value
-        .filter((v): v is Gene => v instanceof Gene)
-        .map((v) => v.id),
-      kitIds: value.filter((v): v is Kit => v instanceof Kit).map((v) => v.id),
-    };
-
-    if (query.geneIds.length + query.kitIds.length > 0) {
-      setQuery(query);
-    }
-  }, [setQuery, value]);
-
-  React.useEffect(() => {
-    if (inputValue.length < 3) {
-      setSearchOptions([]);
-    } else {
+    if (inputValue.length >= 3) {
       setInProgress(true);
 
       api.search(inputValue).then((r) => {
@@ -82,10 +39,7 @@ export default () => {
   }, [inputValue]);
 
   React.useEffect(() => {
-    const lengthKits = value.filter((v) => v instanceof Kit).length;
-    const lengthGenes = value.filter((v) => v instanceof Gene).length;
-
-    if (lengthKits === 0 && lengthGenes > 0) {
+    if (lengthKits === 0 && lengthGenes + lengthVariants > 0) {
       setHelperText(
         <Typography variant="caption" color="secondary">
           Enter at least one DNA capture kit. To see all available kits, type{" "}
@@ -94,7 +48,7 @@ export default () => {
       );
     }
 
-    if (lengthKits > 0 && lengthGenes === 0) {
+    if (lengthKits > 0 && lengthGenes + lengthVariants === 0) {
       setHelperText(
         <Typography variant="caption" color="secondary">
           Enter a gene or dbSNP id.
@@ -102,7 +56,7 @@ export default () => {
       );
     }
 
-    if (lengthKits > 0 && lengthGenes > 0) {
+    if (lengthKits > 0 && lengthGenes + lengthVariants > 0) {
       setHelperText(
         <Typography variant="caption" color="secondary">
           Ready! you can also keep adding more DNA capture kits for comparison.
@@ -110,14 +64,40 @@ export default () => {
       );
     }
 
-    if (lengthKits === 0 && lengthGenes === 0) {
+    if (lengthKits === 0 && lengthGenes + lengthVariants === 0) {
       setHelperText(null);
     }
-  }, [value]);
+  }, [value, lengthGenes, lengthKits, lengthVariants]);
 
-  const handleSubmit = () => {
-    setOpen(true);
+  const handleInputChange = (
+    event: React.SyntheticEvent,
+    newInputValue: string
+  ) => setInputValue(newInputValue);
+
+  const handleChange = (
+    event: React.SyntheticEvent,
+    newValue: (ISearchResult | string)[]
+  ) => {
+    setSearchOptions([]);
+    setInputValue("");
+
+    // Don't allow more than one gene or rs
+    const lastAdded = newValue[newValue.length - 1];
+    if (lastAdded instanceof Gene || lastAdded instanceof Variant) {
+      setValue(
+        newValue.filter(
+          (v) =>
+            !(v instanceof Gene || v instanceof Variant) ||
+            ((v instanceof Gene || v instanceof Variant) && v === lastAdded)
+        ) as ISearchResult[]
+      );
+    } else {
+      setValue(newValue as ISearchResult[]);
+    }
   };
+
+  const handleClose = () => setOpen(false);
+  const handleSubmit = () => setOpen(true);
 
   return (
     <>
@@ -196,12 +176,7 @@ export default () => {
             variant="contained"
             color="primary"
             sx={{ height: 56 }}
-            disabled={
-              !(
-                value.filter((v) => v instanceof Gene).length > 0 &&
-                value.filter((v) => v instanceof Kit).length > 0
-              )
-            }
+            disabled={!(lengthGenes + lengthVariants > 0 && lengthKits > 0)}
             onClick={handleSubmit}
           >
             See coverages
@@ -215,6 +190,7 @@ export default () => {
           onClose={handleClose}
           genes={value.filter((v): v is Gene => v instanceof Gene)}
           kits={value.filter((v): v is Kit => v instanceof Kit)}
+          variants={value.filter((v): v is Variant => v instanceof Variant)}
         />
       )}
     </>
@@ -222,16 +198,37 @@ export default () => {
 };
 
 const ChipStyle = (option: ISearchResult) => {
+  if (option instanceof Kit) {
+    return {
+      variant: "outlined" as "outlined",
+      sx: {
+        backgroundColor: stringToColor(option.name) + "44",
+        cursor: "pointer",
+        border: 0,
+        boxShadow: "0 0 2px #f05a63",
+      },
+    };
+  }
+
+  if (option instanceof Variant) {
+    return {
+      variant: "outlined" as "outlined",
+      sx: {
+        backgroundColor: "#555",
+        cursor: "pointer",
+        border: 0,
+        boxShadow: "inherit",
+      },
+    };
+  }
+
   return {
     variant: "outlined" as "outlined",
     sx: {
-      backgroundColor:
-        option instanceof Kit
-          ? stringToColor(option.name) + "44"
-          : stringToColor(option.name) + "33",
+      backgroundColor: stringToColor(option.name) + "33",
       cursor: "pointer",
       border: 0,
-      boxShadow: option instanceof Kit ? "0 0 2px #f05a63" : "inherit",
+      boxShadow: "inherit",
     },
   };
 };

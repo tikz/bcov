@@ -20,8 +20,35 @@ import (
 	"github.com/chenyahui/gin-cache/persist"
 )
 
+type ReadCount struct {
+	Position uint64  `json:"position"`
+	AvgCount float64 `json:"avgCount"`
+}
+
+type ReadCountsResponse struct {
+	KitName    string      `json:"kitName"`
+	ReadCounts []ReadCount `json:"readCounts"`
+}
+
+type DepthCoverage struct {
+	Depth    uint64  `json:"depth"`
+	Coverage float64 `json:"coverage"`
+}
+
+type DepthCoveragesResponse struct {
+	KitName        string          `json:"kitName"`
+	DepthCoverages []DepthCoverage `json:"depthCoverages"`
+}
+
+type VariantSearch struct {
+	ID         uint64  `json:"id"`
+	Gene       db.Gene `json:"gene"`
+	GeneName   string  `json:"geneName"`
+	GeneID     uint64  `json:"geneId"`
+	ExonNumber int     `json:"exonNumber"`
+}
 type Variant struct {
-	VariantID     string `json:"variantId"`
+	ID            string `json:"id"`
 	ClinSig       string `json:"clinSig"`
 	ProteinChange string `json:"proteinChange"`
 	Chromosome    string `json:"chromosome"`
@@ -66,11 +93,6 @@ func ReadsEndpoint(c *gin.Context) {
 	var exon db.Exon
 	db.DB.Where("id = ?", exonId).First(&exon)
 
-	type ReadCount struct {
-		Position uint64  `json:"position"`
-		AvgCount float64 `json:"avgCount"`
-	}
-
 	var readCounts []ReadCount
 	db.DB.Raw(`
 			SELECT position, avg(count) avg_count FROM read_counts rc
@@ -107,12 +129,7 @@ func ReadsEndpoint(c *gin.Context) {
 	var kit db.Kit
 	db.DB.Where("id = ?", kitId).First(&kit)
 
-	type Response struct {
-		KitName    string      `json:"kitName"`
-		ReadCounts []ReadCount `json:"readCounts"`
-	}
-
-	c.JSON(http.StatusOK, Response{KitName: kit.Name, ReadCounts: filledReadCounts})
+	c.JSON(http.StatusOK, ReadCountsResponse{KitName: kit.Name, ReadCounts: filledReadCounts})
 }
 
 func KitEndpoint(c *gin.Context) {
@@ -178,17 +195,33 @@ func SearchKitsEndpoint(c *gin.Context) {
 	c.JSON(http.StatusOK, kits)
 }
 
+func SearchVariantEndpoint(c *gin.Context) {
+	id, _ := strconv.Atoi(strings.ReplaceAll(c.Param("id"), "rs", ""))
+
+	variants := make([]VariantSearch, 0)
+	db.DB.Raw(`
+				SELECT v.variant_id as id, e.exon_number, g.name as gene_name, g.id as gene_id FROM variants v
+				INNER JOIN exons e on e.id = v.exon_id
+				INNER JOIN genes g on g.id = e.gene_id
+
+				WHERE v.variant_id = ?
+	`, id).Scan(&variants)
+
+	for i := range variants {
+		var gene db.Gene
+		db.DB.Where("id = ?", variants[i].GeneID).First(&gene)
+		variants[i].Gene = gene
+	}
+
+	c.JSON(http.StatusOK, variants)
+}
+
 func DepthCoveragesEndpoint(c *gin.Context) {
 	kitId, _ := strconv.Atoi(c.Param("kit_id"))
 	exonId, _ := strconv.Atoi(c.Param("exon_id"))
 
 	var exon db.Exon
 	db.DB.Where("id = ?", exonId).First(&exon)
-
-	type DepthCoverage struct {
-		Depth    uint64  `json:"depth"`
-		Coverage float64 `json:"coverage"`
-	}
 
 	var depthCoverages []DepthCoverage
 	db.DB.Raw(`
@@ -204,12 +237,7 @@ func DepthCoveragesEndpoint(c *gin.Context) {
 	var kit db.Kit
 	db.DB.Where("id = ?", kitId).First(&kit)
 
-	type Response struct {
-		KitName        string          `json:"kitName"`
-		DepthCoverages []DepthCoverage `json:"depthCoverages"`
-	}
-
-	c.JSON(http.StatusOK, Response{KitName: kit.Name, DepthCoverages: depthCoverages})
+	c.JSON(http.StatusOK, DepthCoveragesResponse{KitName: kit.Name, DepthCoverages: depthCoverages})
 }
 
 func queryExonVariants(kitId int, exonId int, filterId string) []Variant {
@@ -222,7 +250,7 @@ func queryExonVariants(kitId int, exonId int, filterId string) []Variant {
 
 	variants := make([]Variant, 0)
 	db.DB.Raw(fmt.Sprintf(`
-			SELECT variant_id, v.clin_sig, v.protein_change, v.chromosome, v.start, v.end, (SELECT * FROM (SELECT round(avg(rc.count))
+			SELECT variant_id as id, v.clin_sig, v.protein_change, v.chromosome, v.start, v.end, (SELECT * FROM (SELECT round(avg(rc.count))
 			FROM read_counts rc
 			INNER JOIN exon_read_counts erc on rc.exon_read_count_id = erc.id AND erc.exon_id = ?
 			INNER JOIN bam_files bf on erc.bam_file_id = bf.id AND bf.kit_id = ?
@@ -299,7 +327,7 @@ func VariantsCSVEndpoint(c *gin.Context) {
 	writer.Write(header)
 
 	for i, variant := range variants[0] {
-		line := []string{"rs" + variant.VariantID, variant.ClinSig, variant.ProteinChange, variant.Chromosome, fmt.Sprint(variant.Start), fmt.Sprint(variant.End)}
+		line := []string{"rs" + variant.ID, variant.ClinSig, variant.ProteinChange, variant.Chromosome, fmt.Sprint(variant.Start), fmt.Sprint(variant.End)}
 		for j := range kits {
 			line = append(line, fmt.Sprint(variants[j][i].Depth))
 		}
@@ -342,6 +370,7 @@ func runWebServer() {
 
 	r.GET("/api/search/genes/:name", cache.CacheByRequestURI(memoryStore, cacheDuration), SearchGenesEndpoint)
 	r.GET("/api/search/kits/:name", cache.CacheByRequestURI(memoryStore, cacheDuration), SearchKitsEndpoint)
+	r.GET("/api/search/variant/:id", cache.CacheByRequestURI(memoryStore, cacheDuration), SearchVariantEndpoint)
 
 	r.GET("/api/reads/:kit_id/:exon_id", cache.CacheByRequestURI(memoryStore, cacheDuration), ReadsEndpoint)
 	r.GET("/api/depth-coverages/:kit_id/:exon_id", cache.CacheByRequestURI(memoryStore, cacheDuration), DepthCoveragesEndpoint)
