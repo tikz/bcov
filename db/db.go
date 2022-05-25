@@ -8,9 +8,9 @@ import (
 	"os"
 	"sort"
 
+	"github.com/glebarez/sqlite"
 	"github.com/tikz/bio/clinvar"
 	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
@@ -49,7 +49,7 @@ func ConnectSQLite() {
 	var err error
 	DB, err = gorm.Open(sqlite.Open("test.db"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
-		log.Fatalf("failed to connect database")
+		log.Fatalf("failed to connect database: %s", err)
 	}
 
 	if res := DB.Exec("PRAGMA synchronous = OFF; PRAGMA foreign_keys = ON;", nil); res.Error != nil {

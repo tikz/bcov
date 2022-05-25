@@ -9,5 +9,6 @@ RUN make
 FROM scratch
 COPY --from=builder /bcov/bcov /bcov
 COPY --from=builder /bcov/web/build /web/build
+COPY --from=builder /bcov/test.db /test.db
 
 ENTRYPOINT ["/bcov", "-web"]

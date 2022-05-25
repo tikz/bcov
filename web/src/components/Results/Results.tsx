@@ -215,7 +215,7 @@ export default ({ open, onClose, genes, kits, variants }: ResultsProps) => {
                       </IconButton>
                     </Grid>
                     <Grid item>
-                      <Box sx={{ width: 100 }}>
+                      <Box sx={{ width: 150 }}>
                         <Typography
                           variant="h5"
                           align="center"
