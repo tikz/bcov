@@ -96,7 +96,9 @@ export default () => {
         ) as ISearchResult[]
       );
     } else {
-      setValue(newValue as ISearchResult[]);
+      if (typeof lastAdded !== "string") {
+        setValue(newValue as ISearchResult[]);
+      }
     }
   };
 

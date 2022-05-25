@@ -30,8 +30,6 @@ export default ({ kits }: BAMSourcesProps) => {
     })();
   }, [kits]);
 
-  console.log(sources);
-
   const handleOpen = () => {
     setOpen(true);
   };
