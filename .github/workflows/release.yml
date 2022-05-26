@@ -13,7 +13,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GOARCH: "386"
         GOOS: linux
-        EXTRA_FILES: "LICENSE"
+        EXTRA_FILES: "web/build"
   release-linux-amd64:
     runs-on: ubuntu-latest
     steps:
@@ -24,7 +24,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GOARCH: amd64
         GOOS: linux
-        EXTRA_FILES: "LICENSE"
+        EXTRA_FILES: "web/build"
   release-linux-arm:
     runs-on: ubuntu-latest
     steps:
@@ -35,7 +35,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GOARCH: "arm"
         GOOS: linux
-        EXTRA_FILES: "LICENSE"
+        EXTRA_FILES: "web/build"
   release-linux-arm64:
     runs-on: ubuntu-latest
     steps:
@@ -46,7 +46,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GOARCH: arm64
         GOOS: linux
-        EXTRA_FILES: "LICENSE"
+        EXTRA_FILES: "web/build"
   release-darwin-amd64:
     runs-on: ubuntu-latest
     steps:
@@ -57,7 +57,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GOARCH: amd64
         GOOS: darwin
-        EXTRA_FILES: "LICENSE"
+        EXTRA_FILES: "web/build"
   release-windows-386:
     runs-on: ubuntu-latest
     steps:
@@ -68,7 +68,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GOARCH: "386"
         GOOS: windows
-        EXTRA_FILES: "LICENSE"
+        EXTRA_FILES: "web/build"
   release-windows-amd64:
     runs-on: ubuntu-latest
     steps:
@@ -79,4 +79,4 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GOARCH: amd64
         GOOS: windows
-        EXTRA_FILES: "LICENSE"
+        EXTRA_FILES: "web/build"
