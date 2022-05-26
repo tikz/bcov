@@ -32,7 +32,7 @@ export default () => {
       setInProgress(true);
 
       api.search(inputValue).then((r) => {
-        if (inputValue === ":kits") {
+        if (inputValue === "@kits") {
           setValue(value.filter((v) => !(v instanceof Kit)).concat(r));
           setInputValue("");
         }
@@ -47,7 +47,7 @@ export default () => {
       setHelperText(
         <Typography variant="caption" color="secondary">
           Enter at least one DNA capture probe kit. To see all available kits, type{" "}
-          <b>:kits</b>
+          <b>@kits</b>
         </Typography>
       );
     }

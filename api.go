@@ -184,7 +184,7 @@ func SearchKitsEndpoint(c *gin.Context) {
 
 	var kits []db.Kit
 
-	if name == ":kits" {
+	if name == "@kits" {
 		db.DB.Find(&kits)
 		c.JSON(http.StatusOK, kits)
 		return
