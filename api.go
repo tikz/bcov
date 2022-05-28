@@ -240,12 +240,19 @@ func DepthCoveragesEndpoint(c *gin.Context) {
 	c.JSON(http.StatusOK, DepthCoveragesResponse{KitName: kit.Name, DepthCoverages: depthCoverages})
 }
 
-func queryExonVariants(kitId int, exonId int, filterId string) []Variant {
-	var filterQuery string
-	if filterId == "" {
-		filterQuery = ""
+func queryExonVariants(kitId int, exonId int, filterSnp string, filterPathogenic bool) []Variant {
+	var filterSnpQuery string
+	if filterSnp == "" {
+		filterSnpQuery = ""
 	} else {
-		filterQuery = fmt.Sprintf("AND v.variant_id = %s", filterId)
+		filterSnpQuery = fmt.Sprintf("AND v.variant_id = %s", filterSnp)
+	}
+
+	var filterPathogenicQuery string
+	if !filterPathogenic {
+		filterPathogenicQuery = ""
+	} else {
+		filterPathogenicQuery = fmt.Sprintf(`AND v.clin_sig LIKE "%%%s%%"`, "pathogenic")
 	}
 
 	variants := make([]Variant, 0)
@@ -267,10 +274,10 @@ func queryExonVariants(kitId int, exonId int, filterId string) []Variant {
 			LIMIT 10)
 			LIMIT 1) as depth FROM variants v
 			
-			WHERE v.exon_id = ? %s
+			WHERE v.exon_id = ? %s %s
 			
 			ORDER BY v.start
-	`, filterQuery), exonId, kitId, exonId, kitId, exonId, filterId).Scan(&variants)
+	`, filterSnpQuery, filterPathogenicQuery), exonId, kitId, exonId, kitId, exonId, filterSnp).Scan(&variants)
 
 	return variants
 }
@@ -280,10 +287,11 @@ func VariantsEndpoint(c *gin.Context) {
 	exonId, _ := strconv.Atoi(c.Param("exon_id"))
 	filterId := c.DefaultQuery("filter_id", "")
 	pageParam := c.DefaultQuery("page", "1")
+	pathogenicParam, _ := strconv.ParseBool(c.DefaultQuery("pathogenic", "0"))
 	page, _ := strconv.Atoi(pageParam)
 	perPage := 20
 
-	variants := queryExonVariants(kitId, exonId, filterId)
+	variants := queryExonVariants(kitId, exonId, filterId, pathogenicParam)
 
 	start := (page - 1) * perPage
 	if start > len(variants) {
@@ -311,7 +319,7 @@ func VariantsCSVEndpoint(c *gin.Context) {
 	for _, kit := range kits {
 		kitVariants := make([]Variant, 0)
 		for _, exon := range gene.Exons {
-			kitVariants = append(kitVariants, queryExonVariants(int(kit.ID), int(exon.ID), "")...)
+			kitVariants = append(kitVariants, queryExonVariants(int(kit.ID), int(exon.ID), "", false)...)
 		}
 
 		variants = append(variants, kitVariants)

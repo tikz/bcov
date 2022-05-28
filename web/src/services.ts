@@ -59,10 +59,11 @@ const getVariants = async (
   kitId: number,
   exonId: number,
   page: number,
-  filter: string
+  variantFilter: string,
+  pathogenicFilter: Boolean
 ) => {
   const r = await fetch(
-    `/api/variants/${kitId}/${exonId}?page=${page}&filter_id=${filter}`
+    `/api/variants/${kitId}/${exonId}?page=${page}&filter_id=${variantFilter}&pathogenic=${pathogenicFilter}`
   );
   return new Variants(await r.json());
 };

@@ -296,9 +296,7 @@ export default ({ open, onClose, genes, kits, variants }: ResultsProps) => {
                   <Variants
                     kits={kits}
                     exonId={exon.id}
-                    variantFilter={
-                      variants.length > 0 ? "rs" + variants[0].id : ""
-                    }
+                    variant={variants.length > 0 ? "rs" + variants[0].id : ""}
                   />
                 )}
               </Paper>
