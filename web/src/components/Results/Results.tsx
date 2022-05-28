@@ -19,6 +19,7 @@ import { stringToColor } from "../../theme";
 import BAMSources from "./BAMSources";
 import DepthCoverages from "./DepthCoverages";
 import ExonMap from "./ExonMap";
+import KitLegends from "./KitLegends";
 import ReadCounts from "./ReadCounts";
 import Variants from "./Variants";
 
@@ -272,6 +273,8 @@ export default ({ open, onClose, genes, kits, variants }: ResultsProps) => {
               </Grid>
             )}
           </Paper>
+
+          <KitLegends kits={kits} />
 
           <Grid container spacing={1}>
             <Grid item xs={6}>
