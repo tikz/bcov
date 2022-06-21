@@ -5,7 +5,7 @@ import {
   CircularProgress,
   Grid,
   TextField,
-  Typography,
+  Typography
 } from "@mui/material";
 import { Box } from "@mui/system";
 import React, { ReactElement } from "react";
@@ -46,8 +46,8 @@ export default () => {
     if (lengthKits === 0 && lengthGenes + lengthVariants > 0) {
       setHelperText(
         <Typography variant="caption" color="secondary">
-          Enter at least one DNA capture probe kit. To see all available kits, type{" "}
-          <b>@kits</b>
+          Enter at least one DNA capture probe kit.  
+          <Typography variant="caption" color="primary">To see all available kits, type @kits</Typography>
         </Typography>
       );
     }
@@ -63,7 +63,8 @@ export default () => {
     if (lengthKits > 0 && lengthGenes + lengthVariants > 0) {
       setHelperText(
         <Typography variant="caption" color="secondary">
-          Ready! you can also keep adding more DNA capture probes for comparison.
+          Ready! you can also keep adding more DNA capture probes for
+          comparison.
         </Typography>
       );
     }
