@@ -46,8 +46,8 @@ export default () => {
     if (lengthKits === 0 && lengthGenes + lengthVariants > 0) {
       setHelperText(
         <Typography variant="caption" color="secondary">
-          Enter at least one DNA capture probe kit. To see all available kits, 
-          <Typography variant="caption" color="primary">type @kits</Typography>
+          Enter at least one DNA capture probe kit.  
+          <Typography variant="caption" color="primary">To see all available kits, type @kits</Typography>
         </Typography>
       );
     }
@@ -63,7 +63,8 @@ export default () => {
     if (lengthKits > 0 && lengthGenes + lengthVariants > 0) {
       setHelperText(
         <Typography variant="caption" color="secondary">
-          Ready! you can also keep adding more DNA capture probes for comparison.
+          Ready! you can also keep adding more DNA capture probes for
+          comparison.
         </Typography>
       );
     }

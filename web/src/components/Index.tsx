@@ -24,7 +24,8 @@ export default () => (
 
             <Grid item>
               <Typography variant="body1" id="desc">
-              A tool for NGS coverage indexing and benchmark of exome capture probes across anonymized human sequencing data.
+                A tool for NGS coverage indexing and benchmark of exome capture
+                probes across anonymized human sequencing data.
               </Typography>
             </Grid>
             <Grid item>

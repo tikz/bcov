@@ -1,6 +1,7 @@
 bcov
 *.db*
 .env
+*.sh
 
 .vscode
 B0434109PTC_Result
