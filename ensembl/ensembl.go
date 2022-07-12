@@ -70,3 +70,11 @@ func GetExons(db *sqlx.DB) ([]Exon, error) {
 
 	return exons, nil
 }
+
+// TODO: synonyms
+// SELECT xref_gene.display_label AS gene_name, synonym FROM external_synonym
+
+// INNER JOIN gene on gene.display_xref_id = external_synonym.xref_id
+// INNER JOIN xref xref_gene ON xref_gene.xref_id = gene.display_xref_id AND xref_gene.external_db_id = 1100
+
+// WHERE xref_gene.display_label = "MAPK1";
