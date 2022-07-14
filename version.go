@@ -1,4 +1,4 @@
-package main
+package bcov
 
 // -ldflags (Makefile)
 var Version = "development"
