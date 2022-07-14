@@ -1,4 +1,4 @@
-module bcov
+module github.com/tikz/bcov
 
 go 1.18
 
