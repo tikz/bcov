@@ -1,6 +1,6 @@
 {
   "name": "bcov-frontend",
-  "version": "0.7.2-beta-4-gb3f4657-b3f4657",
+  "version": "0.7.2-beta-5-ga8c913a-a8c913a",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.9.0",
@@ -20,11 +20,11 @@
     "axios": "^0.27.2",
     "jsurl": "^0.1.5",
     "logrocket": "^3.0.0",
-    "nivo": "^0.7.0",
-    "react": ">= 16.14.0 < 19.0.0",
+    "nivo": "^0.31.0",
+    "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-router-dom": "^6.3.0",
-    "react-scripts": "^2.1.3",
+    "react-scripts": "5.0.1",
     "sass": "^1.51.0",
     "sine-waves": "^0.3.0",
     "string-to-hex-code-color": "^1.0.8",
