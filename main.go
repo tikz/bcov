@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bcov/api"
 	"flag"
 	"fmt"
 	"os"
@@ -76,7 +77,7 @@ func main() {
 	}
 
 	if *web {
-		runWebServer()
+		api.RunServer()
 		os.Exit(0)
 	}
 
