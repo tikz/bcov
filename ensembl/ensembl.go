@@ -30,6 +30,7 @@ type Synonym struct {
 	Synonym  string `db:"synonym"`
 }
 
+// Connects hangles the connection to the public Ensembl MySQL database
 func Connect() (*sqlx.DB, error) {
 	db, err := sqlx.Connect("mysql", "anonymous@(ensembldb.ensembl.org:3306)/homo_sapiens_core_106_38")
 	if err != nil {

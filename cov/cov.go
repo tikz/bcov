@@ -13,6 +13,8 @@ import (
 	"github.com/fatih/color"
 )
 
+// bamWorker handles the parsing of a single BAM file, given a slice of exons to look for.
+// The exon slice is >expected< to be sorted by karyotypic order (see utils/chromosome.go ChromosomeIndex() function)
 func bamWorker(bamReader *bam.Reader, exons []Exon, rChan chan<- Exon) {
 	spinner := utils.NewSpinner(fmt.Sprintf("reading %s", bamReader.Path))
 	spinner.Start()
@@ -56,7 +58,9 @@ func bamWorker(bamReader *bam.Reader, exons []Exon, rChan chan<- Exon) {
 			}
 		}
 
-		// Check if current exon is way past the current read coordinates (done counting)
+		// Logic and pseudocode:
+		//
+		// Check if the current exon is way past the current read coordinates (done counting)
 		//
 		// 1. sameChromosome := readChromosome == exons[0].Exon.Chromosome
 		// 2. pastExon := readStart > exons[0].Exon.End
@@ -75,6 +79,7 @@ func bamWorker(bamReader *bam.Reader, exons []Exon, rChan chan<- Exon) {
 	close(rChan)
 }
 
+// Load manages the loading and parsing of a BAM file given a path and a kit name.
 func Load(bamPath string, kit string) {
 	bamReader, err := bam.NewReader(bamPath)
 	if err != nil {
@@ -101,6 +106,7 @@ func Load(bamPath string, kit string) {
 	}
 }
 
+// ExonDepth calculates the read depth given BAM file and chromosomic coordinates, returning an Exon instance.
 func ExonDepth(bamPath string, chromosome string, start uint64, end uint64) Exon {
 	bamReader, err := bam.NewReader(bamPath)
 	if err != nil {
@@ -118,6 +124,7 @@ func ExonDepth(bamPath string, chromosome string, start uint64, end uint64) Exon
 	return exon
 }
 
+// helper to track progress
 func prettyPrint(exon db.Exon, depthCoverages map[int]float64) {
 	fmt.Println()
 	fmt.Print("Exon ")

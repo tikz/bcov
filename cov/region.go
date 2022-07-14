@@ -20,6 +20,7 @@ type Exon struct {
 	ExonNumber uint
 }
 
+// NewExon instantiates a new Exon struct
 func NewExon(chromosome string, start uint64, end uint64) Exon {
 	return Exon{
 		Chromosome:    chromosome,
@@ -29,6 +30,7 @@ func NewExon(chromosome string, start uint64, end uint64) Exon {
 	}
 }
 
+// NewExonsFromDB returns a slice of all the exons that are already loaded in the database.
 func NewExonsFromDB() []Exon {
 	dbExons := db.GetExons()
 	var exons []Exon

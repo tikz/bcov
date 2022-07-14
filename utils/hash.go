@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-// SHA256FileHash returns the SHA256 hash of a specified file
+// SHA256FileHash returns the SHA256 hash of the specified file
 func SHA256FileHash(path string) (string, error) {
 	f, err := os.Open(path)
 	if err != nil {

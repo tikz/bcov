@@ -18,6 +18,7 @@ import (
 
 var DB *gorm.DB
 
+// ConnectDB handles the connection and migrations depending on the configured database engine.
 func ConnectDB() {
 	if os.Getenv("BCOV_DB_ENGINE") == "postgres" {
 		ConnectPostgres()
@@ -30,6 +31,7 @@ func ConnectDB() {
 	automigrate()
 }
 
+// TODO: DELETE THIS feature<<<<<, change to MySQL for compatibility with already written manual queries
 func ConnectPostgres() {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
 		os.Getenv("BCOV_DB_HOST"),
@@ -45,6 +47,8 @@ func ConnectPostgres() {
 	}
 }
 
+// ConnectSQLite manages the creation and connection to a local SQLite file.
+// Includes extra PRAGMA statements and settings for improved write performance.
 func ConnectSQLite() {
 	var err error
 	DB, err = gorm.Open(sqlite.Open("test.db"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
@@ -57,6 +61,7 @@ func ConnectSQLite() {
 	}
 }
 
+// StoreFile stores in the database an associated record to an original BAM file source
 func StoreFile(file string, hash string, kitID uint, size int64) (bamFileID uint, created bool) {
 	var bamFileDB BAMFile
 	result := DB.First(&bamFileDB, "sha256_sum = ?", hash)
@@ -69,6 +74,7 @@ func StoreFile(file string, hash string, kitID uint, size int64) (bamFileID uint
 	return bamFileDB.ID, created
 }
 
+// StoreGene stores in the database a record for a gene
 func StoreGene(hgncAccession string, geneAccession string, name string, description string, transcriptAccession string) (geneID uint, created bool) {
 	var geneDB Gene
 	result := DB.Where("gene_accession = ?", geneAccession).First(&geneDB)
@@ -87,6 +93,7 @@ func StoreGene(hgncAccession string, geneAccession string, name string, descript
 	return geneDB.ID, created
 }
 
+// StoreSynonyms stores in the database a record for a gene synonym mapping
 func StoreSynonyms(geneID uint, synonyms []ensembl.Synonym) (created bool) {
 	var geneSynonymDB []GeneSynonym
 
@@ -104,6 +111,7 @@ func StoreSynonyms(geneID uint, synonyms []ensembl.Synonym) (created bool) {
 	return created
 }
 
+// StoreExons stores in the database a record for a gene exon
 func StoreExons(geneID uint, exons []ensembl.Exon) {
 	var exonsDB []Exon
 
@@ -119,6 +127,7 @@ func StoreExons(geneID uint, exons []ensembl.Exon) {
 	DB.Create(&exonsDB)
 }
 
+// GetExons returns a slice of all exons in the database
 func GetExons() []Exon {
 	var exons []Exon
 	DB.Find(&exons)
@@ -141,6 +150,7 @@ func GetExons() []Exon {
 	return exons
 }
 
+// StoreExons stores in the database a single variant (rs) from ClinVar
 func StoreVariant(allele clinvar.Allele, exonId uint) (variantID uint) {
 	variant := Variant{
 		VariantID:     allele.VariantID,
@@ -160,6 +170,7 @@ func StoreVariant(allele clinvar.Allele, exonId uint) (variantID uint) {
 	return variant.ID
 }
 
+// StoreKit stores in the database a commercial exon capture kit name and associated details
 func StoreKit(name string) (kitID uint, created bool) {
 	var kitDB Kit
 	result := DB.Where("name = ?", name).First(&kitDB)

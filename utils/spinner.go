@@ -7,6 +7,8 @@ import (
 	"github.com/theckman/yacspin"
 )
 
+// Helper functions for instantiating and managing console output feedback using github.com/theckman/yacspin
+
 type Spinner struct {
 	spinner   *yacspin.Spinner
 	startTime time.Time

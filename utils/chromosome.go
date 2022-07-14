@@ -1,5 +1,6 @@
 package utils
 
+// Hardcoded chromosome lengths for GRCh38 - hg38
 // https://www.ncbi.nlm.nih.gov/grc/human/data
 var (
 	CHROMOSOME_LENGTHS = [25]uint64{248956422, 242193529, 198295559, 190214555, 181538259,
@@ -9,6 +10,7 @@ var (
 		46709983, 50818468, 156040895, 57227415, 16569}
 )
 
+// ChromosomeIndex returns an index used for sorting the chromosomes based on karyotypic order
 // https://stackoverflow.com/questions/46789259/map-vs-switch-performance-in-go
 func ChromosomeIndex(chromosome string) int {
 	switch chromosome {
