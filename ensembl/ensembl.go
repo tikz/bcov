@@ -8,6 +8,7 @@ import (
 // https://www.ensembl.org/info/data/mysql.html
 // https://www.ensembl.org/info/docs/api/core/core_schema.html
 
+// Exon represents a single row returned from the associated Ensembl query.
 type Exon struct {
 	HGNCAccession       string `db:"hgnc_accession"`
 	GeneAccession       string `db:"gene_accession"`
@@ -23,6 +24,12 @@ type Exon struct {
 	ExonAccession       string `db:"exon_accession"`
 }
 
+// Synonym represents a single row returned from the associated Ensembl query.
+type Synonym struct {
+	GeneName string `db:"gene_name"`
+	Synonym  string `db:"synonym"`
+}
+
 func Connect() (*sqlx.DB, error) {
 	db, err := sqlx.Connect("mysql", "anonymous@(ensembldb.ensembl.org:3306)/homo_sapiens_core_106_38")
 	if err != nil {
@@ -31,6 +38,7 @@ func Connect() (*sqlx.DB, error) {
 	return db, nil
 }
 
+// GetExons retrieves all GHCh38 exons from Ensembl.
 func GetExons(db *sqlx.DB) ([]Exon, error) {
 	exons := []Exon{}
 	query := `
@@ -71,10 +79,22 @@ func GetExons(db *sqlx.DB) ([]Exon, error) {
 	return exons, nil
 }
 
-// TODO: synonyms
-// SELECT xref_gene.display_label AS gene_name, synonym FROM external_synonym
+// GetSynonyms retrieves all gene synonyms from Ensembl given a canonical HGNC gene name.
+func GetSynonyms(db *sqlx.DB, HGNCname string) ([]Synonym, error) {
+	synonyms := []Synonym{}
+	query := `
+	SELECT xref_gene.display_label AS gene_name, synonym FROM external_synonym
 
-// INNER JOIN gene on gene.display_xref_id = external_synonym.xref_id
-// INNER JOIN xref xref_gene ON xref_gene.xref_id = gene.display_xref_id AND xref_gene.external_db_id = 1100
+	INNER JOIN gene on gene.display_xref_id = external_synonym.xref_id
+	INNER JOIN xref xref_gene ON xref_gene.xref_id = gene.display_xref_id AND xref_gene.external_db_id = 1100
+	
+	WHERE xref_gene.display_label = "` + HGNCname + `";
+	`
 
-// WHERE xref_gene.display_label = "MAPK1";
+	err := db.Select(&synonyms, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return synonyms, nil
+}

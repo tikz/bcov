@@ -19,13 +19,20 @@ type BAMFile struct {
 }
 
 type Gene struct {
-	ID                  uint   `gorm:"primarykey" json:"id"`
-	HGNCAccession       string `gorm:"unique" json:"hgncAccession"`
-	GeneAccession       string `gorm:"uniqueIndex" json:"geneAccession"`
-	Name                string `gorm:"uniqueIndex" json:"name"`
-	Description         string `json:"description"`
-	TranscriptAccession string `json:"transcriptAccession"`
-	Exons               []Exon `json:"exons"`
+	ID                  uint          `gorm:"primarykey" json:"id"`
+	HGNCAccession       string        `gorm:"unique" json:"hgncAccession"`
+	GeneAccession       string        `gorm:"uniqueIndex" json:"geneAccession"`
+	Name                string        `gorm:"uniqueIndex" json:"name"`
+	Description         string        `json:"description"`
+	TranscriptAccession string        `json:"transcriptAccession"`
+	Exons               []Exon        `json:"exons"`
+	GeneSynonyms        []GeneSynonym `json:"synonyms"`
+}
+
+type GeneSynonym struct {
+	ID      uint   `gorm:"primarykey" json:"id"`
+	GeneID  uint   `json:"-"`
+	Synonym string `json:"synonym"`
 }
 
 type Exon struct {
@@ -86,5 +93,5 @@ type Variant struct {
 }
 
 func automigrate() {
-	DB.AutoMigrate(&Kit{}, &BAMFile{}, &Gene{}, &Exon{}, &ExonReadCount{}, &ReadCount{}, &ExonDepthCoverage{}, &DepthCoverage{}, &Variant{})
+	DB.AutoMigrate(&Kit{}, &BAMFile{}, &Gene{}, &GeneSynonym{}, &Exon{}, &ExonReadCount{}, &ReadCount{}, &ExonDepthCoverage{}, &DepthCoverage{}, &Variant{})
 }

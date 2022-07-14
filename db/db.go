@@ -87,6 +87,23 @@ func StoreGene(hgncAccession string, geneAccession string, name string, descript
 	return geneDB.ID, created
 }
 
+func StoreSynonyms(geneID uint, synonyms []ensembl.Synonym) (created bool) {
+	var geneSynonymDB []GeneSynonym
+
+	for _, synonym := range synonyms {
+		geneSynonymDB = append(geneSynonymDB, GeneSynonym{
+			GeneID:  geneID,
+			Synonym: synonym.Synonym})
+	}
+
+	result := DB.Create(&geneSynonymDB)
+	if result.RowsAffected == 0 {
+		created = true
+	}
+
+	return created
+}
+
 func StoreExons(geneID uint, exons []ensembl.Exon) {
 	var exonsDB []Exon
 

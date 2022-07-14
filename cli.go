@@ -74,7 +74,7 @@ func cliFetchExons() {
 		log.Fatal(err)
 	}
 
-	spinner.Message("retrieving exons...")
+	spinner.Message("running Ensembl query for retrieving all exons...")
 	exons, err := ensembl.GetExons(ensemblDB)
 	if err != nil {
 		log.Fatal(err)
@@ -95,11 +95,24 @@ func cliFetchExons() {
 
 	exonCount := 0
 	for geneName, exons := range geneExons {
-		spinner.Message(fmt.Sprintf("%s: %d exons", geneName, len(exons)))
+		// Store exons in database
 		geneID, created := db.StoreGene(exons[0].HGNCAccession, exons[0].GeneAccession, geneName, exons[0].GeneDescription, exons[0].TranscriptAccession)
 		if created {
 			db.StoreExons(geneID, exons)
+			spinner.Message(fmt.Sprintf("%s: %d exons", geneName, len(exons)))
 		}
+
+		// Store synonyms in database
+		synonyms, err := ensembl.GetSynonyms(ensemblDB, geneName)
+		if err != nil {
+			log.Fatalf("Error getting synonyms for gene %s: %s", geneName, err)
+		}
+		created = db.StoreSynonyms(geneID, synonyms)
+
+		if created {
+			spinner.Message(fmt.Sprintf("%s: with %d gene synonyms", geneName, len(synonyms)))
+		}
+
 		exonCount += len(exons)
 	}
 

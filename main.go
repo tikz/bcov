@@ -9,6 +9,7 @@ import (
 	"github.com/fatih/color"
 )
 
+// List of available CLI commands
 var (
 	testDb        = flag.Bool("test-db", false, "Test database connection")
 	fetchExons    = flag.Bool("fetch-exons", false, "Fetch exons from Ensembl and store in DB")
