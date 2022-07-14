@@ -1,12 +1,13 @@
 package db
 
 import (
-	"bcov/ensembl"
-	"bcov/utils"
 	"fmt"
 	"log"
 	"os"
 	"sort"
+
+	"github.com/tikz/bcov/ensembl"
+	"github.com/tikz/bcov/utils"
 
 	"github.com/glebarez/sqlite"
 	"github.com/tikz/bio/clinvar"

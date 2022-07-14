@@ -1,7 +1,7 @@
 package api
 
 import (
-	"bcov/db"
+	"github.com/tikz/bcov/db"
 )
 
 func RunServer() {

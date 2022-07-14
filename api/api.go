@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bcov/db"
 	"bytes"
 	"encoding/csv"
 	"fmt"
@@ -10,6 +9,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/tikz/bcov/db"
 
 	"github.com/gin-gonic/gin"
 )

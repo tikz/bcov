@@ -1,7 +1,7 @@
 package cov
 
 import (
-	"bcov/db"
+	"github.com/tikz/bcov/db"
 )
 
 type Position uint64

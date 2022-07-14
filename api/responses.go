@@ -1,6 +1,6 @@
 package api
 
-import "bcov/db"
+import "github.com/tikz/bcov/db"
 
 type ReadCount struct {
 	Position uint64  `json:"position"`

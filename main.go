@@ -1,10 +1,11 @@
 package bcov
 
 import (
-	"bcov/api"
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/tikz/bcov/api"
 
 	"github.com/biogo/hts/sam"
 	"github.com/fatih/color"

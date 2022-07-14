@@ -1,10 +1,6 @@
 package bcov
 
 import (
-	"bcov/cov"
-	"bcov/db"
-	"bcov/ensembl"
-	"bcov/utils"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -13,6 +9,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/tikz/bcov/cov"
+	"github.com/tikz/bcov/db"
+	"github.com/tikz/bcov/ensembl"
+	"github.com/tikz/bcov/utils"
 
 	"github.com/tikz/bio/clinvar"
 )

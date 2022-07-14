@@ -1,13 +1,14 @@
 package cov
 
 import (
-	"bcov/bam"
-	"bcov/db"
-	"bcov/utils"
 	"fmt"
 	"io"
 	"log"
 	"strings"
+
+	"github.com/tikz/bcov/bam"
+	"github.com/tikz/bcov/db"
+	"github.com/tikz/bcov/utils"
 
 	"github.com/biogo/hts/sam"
 	"github.com/fatih/color"

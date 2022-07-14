@@ -1,12 +1,13 @@
 package bam
 
 import (
-	"bcov/utils"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/tikz/bcov/utils"
 
 	"github.com/biogo/hts/bam"
 	"github.com/biogo/hts/bgzf"
