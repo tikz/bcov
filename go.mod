@@ -6,7 +6,7 @@ require (
 	github.com/biogo/hts v1.4.3
 	github.com/chenyahui/gin-cache v1.7.0
 	github.com/fatih/color v1.13.0
-	github.com/gin-contrib/cors v1.3.1
+	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/static v0.0.1
 	github.com/gin-gonic/gin v1.8.1
 	github.com/glebarez/sqlite v1.4.5
@@ -14,8 +14,8 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/theckman/yacspin v0.13.12
 	github.com/tikz/bio v0.0.0-20220521201808-ffb83cba20ca
-	gorm.io/driver/postgres v1.3.7
-	gorm.io/gorm v1.23.6
+	gorm.io/driver/postgres v1.3.8
+	gorm.io/gorm v1.23.8
 )
 
 require (

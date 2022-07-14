@@ -1,6 +1,6 @@
 {
   "name": "bcov-frontend",
-  "version": "0.7.0-beta-4-g39fe46f-39fe46f",
+  "version": "0.7.2-beta-2-g6e78015-6e78015",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.9.0",
