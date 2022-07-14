@@ -1,4 +1,4 @@
-package main
+package bcov
 
 import (
 	"bcov/api"
