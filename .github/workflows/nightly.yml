@@ -16,8 +16,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: Create Release Folder
+      - uses: actions/checkout@v1
+      - name: Create Release Folder
       - uses: actions/checkout@v3
 
       - name: Set up Go
@@ -45,7 +45,6 @@ jobs:
 
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        REPO_OWNER: keithweaver
       
       - name: Deploy Linux release
         env:
