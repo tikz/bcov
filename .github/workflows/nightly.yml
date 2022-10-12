@@ -1,4 +1,5 @@
-name: Deploy Nightly
+name: Deploy nightly
+
 on:
   schedule:
     - cron: "0 2 * * *" # run at 2 AM UTC
@@ -6,8 +7,6 @@ on:
 jobs:
   nightly:
     name: Deploy nightly
-    strategy:
-      fail-fast: false
     runs-on: ubuntu-latest
 
     steps:
