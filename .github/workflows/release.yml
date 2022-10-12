@@ -1,0 +1,35 @@
+name: "Release"
+
+on:
+  push:
+    branches:
+      - "master"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Test
+      run: go test -v ./...
+
+    - name: Use Node.js 16.x
+    - uses: actions/checkout@v3
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16.x
+        cache: "npm"
+        cache-dependency-path: ./web/package-lock.json
+    - run: npm ci --legacy-peer-deps
+      working-directory: web
+    - run: npm run build --if-present
+      working-directory: web
