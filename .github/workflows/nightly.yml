@@ -1,58 +1,29 @@
-# name: Nightly
-
-# on:
-#   push:
-#     branches: [main]
-#   schedule:
-#     - cron: "0 2 * * *" # run at 2 AM UTC
-
-
-name: Release
 on:
   push:
-    branches:
-      - master
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
+
+name: Create Release
+
 jobs:
   build:
+    name: Create Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - name: Create Release Folder
-      - uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-
-      - name: Test
-        run: go test -v ./...
-
-      - name: Build
-        run: go build -v ./...
-
-      - uses: actions/checkout@v3
-      - name: Use Node.js 16.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16.x
-          cache: "npm"
-          cache-dependency-path: ./web/package-lock.json
-      - run: npm ci --legacy-peer-deps
-        working-directory: web
-      - run: npm run build --if-present
-        working-directory: web
-
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Deploy Linux release
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:
-          upload_url: https://uploads.github.com/repos/tikz/bcov/releases/79590666/assets%7B?name,label}
-          release_id: 79590666
-          asset_path: ./bcov.zip
-          asset_name: bcov-$$.zip
-          asset_content_type: application/zip
-          max_releases: 7
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Changes in this Release
+            - First Change
+            - Second Change
+          draft: false
+          prerelease: false
