@@ -1,12 +1,23 @@
-- name: Nightly release
-  id: nightly_release
-  uses: viperproject/create-nightly-release@v1
-  env:
-    # This token is provided by Actions, you do not need to create your own token
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  with:
-    tag_name: ${{ env.TAG_NAME }}
-    release_name: Nightly Release ${{ env.TAG_NAME }}
-    body: Nightly Bcov release
-    keep_num: 0
-    keep_tags: false
+name: Deploy Nightly
+on:
+  schedule:
+    - cron: "0 2 * * *" # run at 2 AM UTC
+
+jobs:
+  nightly:
+    name: Deploy nightly
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy Linux release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: https://uploads.github.com/repos/tikz/bcov/releases/79590666/assets%7B?name,label}
+          release_id: 79590666
+          asset_path: ./bcov.zip
+          asset_name: bcov-$$.zip
+          asset_content_type: application/zip
+          max_releases: 7
