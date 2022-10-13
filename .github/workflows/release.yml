@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: ghcr.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -43,4 +49,4 @@ jobs:
         with:
           artifacts: "bcov,web/src"
           bodyFile: "README.md"
-          token: ${{ secrets.YOUR_GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
