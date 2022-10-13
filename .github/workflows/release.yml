@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - uses: actions/checkout@v3
 
@@ -40,6 +41,6 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "release.tar.gz,foo/*.txt"
+          artifacts: "bcov,web/src"
           bodyFile: "README.md"
           token: ${{ secrets.YOUR_GITHUB_TOKEN }}
