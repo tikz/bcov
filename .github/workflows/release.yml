@@ -35,10 +35,9 @@ jobs:
       - run: npm run build --if-present
         working-directory: web
 
-      - uses: actions/checkout@master
-      - name: Archive Release
-        uses: thedoctor0/zip-release@main
+      - uses: actions/checkout@v2
+      - uses: ncipollo/release-action@v1
         with:
-          type: "zip"
-          filename: "release.zip"
-          exclusions: "*.git* /*node_modules/* .editorconfig"
+          artifacts: "release.tar.gz,foo/*.txt"
+          bodyFile: "body.md"
+          token: ${{ secrets.YOUR_GITHUB_TOKEN }}
