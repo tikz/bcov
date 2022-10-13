@@ -34,14 +34,13 @@ jobs:
         working-directory: web
       - run: npm run build --if-present
         working-directory: web
-
-    build:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@master
-        - name: Archive Release
-          uses: thedoctor0/zip-release@main
-          with:
-            type: "zip"
-            filename: "release.zip"
-            exclusions: "*.git* /*node_modules/* .editorconfig"
+    
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Archive Release
+        uses: thedoctor0/zip-release@main
+        with:
+          type: "zip"
+          filename: "release.zip"
+          exclusions: "*.git* /*node_modules/* .editorconfig"
