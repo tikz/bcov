@@ -2,10 +2,10 @@ version: "3"
 
 services:
   bcov:
-    image: ghcr.io/tikz/bcov:latest
+    image: ghcr.io/tikz/bcov:main
     container_name: bcov
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "80:8080"
     volumes:
-      - ./main.db:/bcov/main.db
+      - ./main.db:/main.db
