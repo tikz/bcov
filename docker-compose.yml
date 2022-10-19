@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  bcov:
+    image: ghcr.io/tikz/bcov:latest
+    container_name: bcov
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./main.db:/bcov/main.db
