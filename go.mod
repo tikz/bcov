@@ -1,7 +1,5 @@
 module github.com/tikz/bcov
 
-replace github.com/tikz/bcov => ./bcov
-
 go 1.19
 
 require (
