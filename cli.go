@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -10,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/fatih/color"
+	"github.com/tikz/bcov/api"
 	"github.com/tikz/bcov/cov"
 	"github.com/tikz/bcov/db"
 	"github.com/tikz/bcov/ensembl"
@@ -17,6 +20,66 @@ import (
 
 	"github.com/tikz/bio/clinvar"
 )
+
+// splash prints the greeting and current version info.
+func splash() {
+	d := color.New(color.FgRed, color.Bold)
+	d.Println("Bcov")
+	fmt.Println("Version: ", Version, "\t\tCommit: ", CommitHash)
+	fmt.Println()
+}
+
+// parseFlags starts the required action by the user, or prints the usage help.
+func parseFlags() {
+	if *help {
+		fmt.Println("Usage:")
+		flag.PrintDefaults()
+		os.Exit(0)
+	}
+
+	if *testDb {
+		cliTestDB()
+		os.Exit(0)
+	}
+
+	if *fetchExons {
+		cliFetchExons()
+		os.Exit(0)
+	}
+
+	if *fetchVariants {
+		cliFetchVariants()
+		os.Exit(0)
+	}
+
+	if *region != "" {
+		cliRegion()
+		os.Exit(0)
+	}
+
+	if *bam != "" {
+		cliLoadBAM()
+		os.Exit(0)
+	}
+
+	if *bams != "" {
+		cliLoadBAMs()
+		os.Exit(0)
+	}
+
+	if *deleteBam != "" {
+		cliDeleteBam()
+		os.Exit(0)
+	}
+
+	if *web {
+		api.RunServer()
+		os.Exit(0)
+	}
+
+	fmt.Println("Usage:")
+	flag.PrintDefaults()
+}
 
 func cliTestDB() {
 	db.ConnectDB()

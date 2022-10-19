@@ -2,13 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"os"
-
-	"github.com/tikz/bcov/api"
-
-	"github.com/biogo/hts/sam"
-	"github.com/fatih/color"
 )
 
 // List of available CLI commands
@@ -26,62 +19,10 @@ var (
 )
 
 func init() {
-	d := color.New(color.FgRed, color.Bold)
-	d.Println("Bcov")
-	fmt.Println("Version: ", Version, "\t\tCommit: ", CommitHash)
-	fmt.Println()
+	splash()
 }
-
-const maxFlag = int(^sam.Flags(0))
 
 func main() {
 	flag.Parse()
-	if *help {
-		fmt.Println("Usage:")
-		flag.PrintDefaults()
-		os.Exit(0)
-	}
-
-	if *testDb {
-		cliTestDB()
-		os.Exit(0)
-	}
-
-	if *fetchExons {
-		cliFetchExons()
-		os.Exit(0)
-	}
-
-	if *fetchVariants {
-		cliFetchVariants()
-		os.Exit(0)
-	}
-
-	if *region != "" {
-		cliRegion()
-		os.Exit(0)
-	}
-
-	if *bam != "" {
-		cliLoadBAM()
-		os.Exit(0)
-	}
-
-	if *bams != "" {
-		cliLoadBAMs()
-		os.Exit(0)
-	}
-
-	if *deleteBam != "" {
-		cliDeleteBam()
-		os.Exit(0)
-	}
-
-	if *web {
-		api.RunServer()
-		os.Exit(0)
-	}
-
-	fmt.Println("Usage:")
-	flag.PrintDefaults()
+	parseFlags()
 }
