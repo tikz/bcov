@@ -37,7 +37,6 @@ jobs:
       - name: Compress
         run: tar -czvf release.tar.gz bcov web/build/
 
-      - uses: actions/checkout@v2
       - uses: ncipollo/release-action@v1.11.1
         with:
           omitBody: true
