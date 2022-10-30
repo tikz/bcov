@@ -37,9 +37,15 @@ jobs:
       - name: Compress
         run: tar -czvf release.tar.gz bcov web/build/
 
+      - name: Debug working dir
+        run: ls
+
+      - name: Debug workspace path
+        run: ls ${{ github.workspace }}
+
       - uses: actions/checkout@v2
       - uses: ncipollo/release-action@v1
         with:
           omitBody: true
-          artifacts: bcov/release.tar.gz
+          artifacts: ${{ github.workspace }}/release.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
