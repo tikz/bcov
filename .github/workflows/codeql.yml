@@ -8,6 +8,9 @@ on:
     branches: [ "main" ]
   schedule:
     - cron: '27 5 * * 2'
+  create:
+    tags:
+      - v*
 
 jobs:
   analyze:
