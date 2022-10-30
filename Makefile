@@ -6,7 +6,7 @@ all: build
 build: export CGO_ENABLED = 0
 build: export GO111MODULE = on
 build: dep
-	npm version $(VERSION)-$(COMMIT) --allow-same-version --prefix web/
+	npm version $(VERSION) --allow-same-version --prefix web/
 	npm install --legacy-peer-deps --prefix web/
 	npm run build --prefix web/
 	go mod tidy
