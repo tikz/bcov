@@ -40,6 +40,6 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "release.tar.gz"
-          bodyFile: "README.md"
+          omitBody: true
+          artifacts: ${{ github.workspace }}\release.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
