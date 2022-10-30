@@ -10,7 +10,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -41,5 +41,5 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           omitBody: true
-          artifacts: ${{ github.workspace }}\release.tar.gz
+          artifacts: release.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
