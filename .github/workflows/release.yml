@@ -41,5 +41,5 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           omitBody: true
-          artifacts: release.tar.gz
+          artifacts: bcov/release.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
