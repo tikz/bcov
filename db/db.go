@@ -52,7 +52,7 @@ func ConnectPostgres() {
 // Includes extra PRAGMA statements and settings for improved write performance.
 func ConnectSQLite() {
 	var err error
-	DB, err = gorm.Open(sqlite.Open("test.db"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	DB, err = gorm.Open(sqlite.Open("main.db"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		log.Fatalf("failed to connect database: %s", err)
 	}

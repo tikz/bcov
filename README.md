@@ -10,6 +10,12 @@ Effortlessly query coverage and read depths of genes and exonic variants across 
 
 Backend database preloading and serving of the HTTP API and React frontend is done through the same single binary with zero dependencies.
 
+https://pkg.go.dev/github.com/tikz/bcov/cov
+
+https://pkg.go.dev/github.com/tikz/bcov/api
+
+https://pkg.go.dev/github.com/tikz/bcov/db
+
 ## Local build
 
 ### Requirements

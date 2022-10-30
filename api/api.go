@@ -9,13 +9,48 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
+	cache "github.com/chenyahui/gin-cache"
+	"github.com/chenyahui/gin-cache/persist"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/static"
 	"github.com/tikz/bcov/db"
 
 	"github.com/gin-gonic/gin"
 )
 
-// JSON API endpoints for the backend
+func Endpoints() *gin.Engine {
+	cacheDuration := 24 * 7 * time.Hour
+	memoryStore := persist.NewMemoryStore(cacheDuration)
+
+	r := gin.Default()
+	r.Use(cors.Default())
+
+	r.Use(static.Serve("/", static.LocalFile("web/build", true)))
+
+	r.GET("/api/kits", KitsEndpoint)
+	r.GET("/api/kit/:id", KitEndpoint)
+	r.GET("/api/gene/:id", GeneEndpoint)
+
+	r.GET("/api/search/genes/:name", cache.CacheByRequestURI(memoryStore, cacheDuration), SearchGenesEndpoint)
+	r.GET("/api/search/kits/:name", cache.CacheByRequestURI(memoryStore, cacheDuration), SearchKitsEndpoint)
+	r.GET("/api/search/variant/:id", cache.CacheByRequestURI(memoryStore, cacheDuration), SearchVariantEndpoint)
+
+	r.GET("/api/reads/:kit_id/:exon_id", cache.CacheByRequestURI(memoryStore, cacheDuration), ReadsEndpoint)
+	r.GET("/api/depth-coverages/:kit_id/:exon_id", cache.CacheByRequestURI(memoryStore, cacheDuration), DepthCoveragesEndpoint)
+	r.GET("/api/variants/:kit_id/:exon_id", cache.CacheByRequestURI(memoryStore, cacheDuration), VariantsEndpoint)
+	r.GET("/api/bams/:kit_id", BAMsEndpoint)
+	r.GET("/api/variants-csv/:gene_name", cache.CacheByRequestURI(memoryStore, cacheDuration), VariantsCSVEndpoint)
+
+	r.NoRoute(func(c *gin.Context) {
+		c.File("web/build/index.html")
+	})
+
+	return r
+}
+
+// Endpoints logic
 
 // KitsEndpoint returns all the kits in the database
 func KitsEndpoint(c *gin.Context) {
@@ -30,7 +65,9 @@ func KitsEndpoint(c *gin.Context) {
 
 // GeneEndpoint returns details about a given gene passed by database ID
 func GeneEndpoint(c *gin.Context) {
+	// API inputs
 	id := c.Param("id")
+	////
 
 	var gene db.Gene
 	result := db.DB.Where("id = ?", id).Preload("Exons").First(&gene)
@@ -43,67 +80,38 @@ func GeneEndpoint(c *gin.Context) {
 
 // ReadsEndpoint returns all reads for a given kit ID and exon ID
 func ReadsEndpoint(c *gin.Context) {
+	// API inputs
 	kitId, _ := strconv.Atoi(c.Param("kit_id"))
 	exonId, _ := strconv.Atoi(c.Param("exon_id"))
+	////
 
-	var exon db.Exon
-	db.DB.Where("id = ?", exonId).First(&exon)
-
-	var readCounts []ReadCount
-	db.DB.Raw(`
-			SELECT position, avg(count) avg_count FROM read_counts rc
-			INNER JOIN exon_read_counts edc on rc.exon_read_count_id = edc.id
-			INNER JOIN bam_files bf on edc.bam_file_id = bf.id
-			WHERE edc.exon_id = ? AND bf.kit_id = ?
-			GROUP BY rc.position
-			ORDER BY position
-	`, exonId, kitId).Scan(&readCounts)
-
-	var start uint64
-	if len(readCounts) == 0 {
-		start = exon.Start
-	} else {
-		start = readCounts[0].Position
-	}
-
-	readCountsM := make(map[uint64]float64)
-	for _, readCount := range readCounts {
-		readCountsM[readCount.Position] = readCount.AvgCount
-	}
-
-	var filledReadCounts []ReadCount
-	for i := uint64(0); i <= exon.End-start; i++ {
-		if i%10 == 0 {
-			if readCount, ok := readCountsM[start+i]; ok {
-				filledReadCounts = append(filledReadCounts, ReadCount{Position: start + i, AvgCount: readCount})
-			} else {
-				filledReadCounts = append(filledReadCounts, ReadCount{Position: start + i, AvgCount: 0})
-			}
-		}
-	}
+	readCounts := queryKitReads(exonId, kitId)
 
 	var kit db.Kit
 	db.DB.Where("id = ?", kitId).First(&kit)
 
-	c.JSON(http.StatusOK, ReadCountsResponse{KitName: kit.Name, ReadCounts: filledReadCounts})
+	c.JSON(http.StatusOK, ReadCountsResponse{KitName: kit.Name, ReadCounts: readCounts})
 }
 
 // KitEndpoint returns details about a given kit passed by database ID
 func KitEndpoint(c *gin.Context) {
+	// API inputs
 	id := c.Param("id")
+	////
 
 	var kit db.Kit
 	result := db.DB.Where("id = ?", id).First(&kit)
 	if result.RowsAffected > 0 {
-		c.JSON(http.StatusOK, kit)
-	} else {
 		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 	}
 }
 
 // SearchGenesEndpoint returns a single gene that matches exactly or partially the HGNC name
 func SearchGenesEndpoint(c *gin.Context) {
+	// API inputs
 	name := c.Param("name")
+	////
+
 	if len(name) < 3 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "too few characters to search"})
 		return
@@ -126,6 +134,8 @@ func SearchGenesEndpoint(c *gin.Context) {
 	sort.SliceStable(genes, func(i, j int) bool {
 		return strings.Index(genes[i].Name, nameUpper) > strings.Index(genes[j].Name, nameUpper)
 	})
+
+	// Limit number of results
 	if len(genes) > 20 {
 		genes = genes[:20]
 	}
@@ -135,7 +145,10 @@ func SearchGenesEndpoint(c *gin.Context) {
 
 // SearchKitsEndpoint returns details about a given kit that matches exactly or partially the given name
 func SearchKitsEndpoint(c *gin.Context) {
+	// API inputs
 	name := c.Param("name")
+	////
+
 	if len(name) < 3 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "too few characters to search"})
 		return
@@ -156,7 +169,9 @@ func SearchKitsEndpoint(c *gin.Context) {
 
 // SearchVariantEndpoint returns details about a given variant by exact database ID
 func SearchVariantEndpoint(c *gin.Context) {
+	// API inputs
 	id, _ := strconv.Atoi(strings.ReplaceAll(c.Param("id"), "rs", ""))
+	////
 
 	variants := make([]VariantSearch, 0)
 	db.DB.Raw(`
@@ -178,8 +193,10 @@ func SearchVariantEndpoint(c *gin.Context) {
 
 // DepthCoveragesEndpoint returns the depth coverage for a given kit and exon by database ID
 func DepthCoveragesEndpoint(c *gin.Context) {
+	// API inputs
 	kitId, _ := strconv.Atoi(c.Param("kit_id"))
 	exonId, _ := strconv.Atoi(c.Param("exon_id"))
+	////
 
 	var exon db.Exon
 	db.DB.Where("id = ?", exonId).First(&exon)
@@ -201,51 +218,9 @@ func DepthCoveragesEndpoint(c *gin.Context) {
 	c.JSON(http.StatusOK, DepthCoveragesResponse{KitName: kit.Name, DepthCoverages: depthCoverages})
 }
 
-// helper function for returning a list of variants that fall inside given a kit and exon database ID, and applying custom filters to the output
-func queryExonVariants(kitId int, exonId int, filterSnp string, filterPathogenic bool) []Variant {
-	var filterSnpQuery string
-	if filterSnp == "" {
-		filterSnpQuery = ""
-	} else {
-		filterSnpQuery = fmt.Sprintf("AND v.variant_id = %s", filterSnp)
-	}
-
-	var filterPathogenicQuery string
-	if !filterPathogenic {
-		filterPathogenicQuery = ""
-	} else {
-		filterPathogenicQuery = fmt.Sprintf(`AND v.clin_sig LIKE "%%%s%%"`, "pathogenic")
-	}
-
-	variants := make([]Variant, 0)
-	db.DB.Raw(fmt.Sprintf(`
-			SELECT variant_id as id, v.clin_sig, v.protein_change, v.chromosome, v.start, v.end, (SELECT * FROM (SELECT round(avg(rc.count))
-			FROM read_counts rc
-			INNER JOIN exon_read_counts erc on rc.exon_read_count_id = erc.id AND erc.exon_id = ?
-			INNER JOIN bam_files bf on erc.bam_file_id = bf.id AND bf.kit_id = ?
-			WHERE position >= v.start
-			GROUP BY position
-			ORDER BY position
-			LIMIT 10) UNION ALL SELECT * FROM (SELECT round(avg(count))
-			FROM read_counts rc
-			INNER JOIN exon_read_counts erc on rc.exon_read_count_id = erc.id AND erc.exon_id = ?
-			INNER JOIN bam_files bf on erc.bam_file_id = bf.id AND bf.kit_id = ?
-			WHERE position < v.start
-			GROUP BY position
-			ORDER BY position DESC
-			LIMIT 10)
-			LIMIT 1) as depth FROM variants v
-			
-			WHERE v.exon_id = ? %s %s
-			
-			ORDER BY v.start
-	`, filterSnpQuery, filterPathogenicQuery), exonId, kitId, exonId, kitId, exonId, filterSnp).Scan(&variants)
-
-	return variants
-}
-
 // VariantsEndpoint returns a list of variants that fall inside given a kit and exon database ID
 func VariantsEndpoint(c *gin.Context) {
+	// API inputs
 	kitId, _ := strconv.Atoi(c.Param("kit_id"))
 	exonId, _ := strconv.Atoi(c.Param("exon_id"))
 	filterId := c.DefaultQuery("filter_id", "")
@@ -253,6 +228,7 @@ func VariantsEndpoint(c *gin.Context) {
 	pathogenicParam, _ := strconv.ParseBool(c.DefaultQuery("pathogenic", "0"))
 	page, _ := strconv.Atoi(pageParam)
 	perPage := 20
+	////
 
 	variants := queryExonVariants(kitId, exonId, filterId, pathogenicParam)
 
