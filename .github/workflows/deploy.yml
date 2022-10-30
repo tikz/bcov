@@ -1,0 +1,18 @@
+name: Release
+
+on:
+  create:
+    tags:
+      - v*
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        run: echo ${{ secrets.EC2_USER }} | ssh -i /dev/stdin ${{ secrets.EC2_USER }}@${{ secrets.EC2_USER }} 'docker-compose pull; docker-compose stop; docker-compose start"'
