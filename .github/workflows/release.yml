@@ -41,5 +41,5 @@ jobs:
       - uses: ncipollo/release-action@v1.11.1
         with:
           omitBody: true
-          artifacts: ${{ github.workspace }}/release.tar.gz
+          artifacts: release.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
