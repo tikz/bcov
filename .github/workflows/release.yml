@@ -35,10 +35,10 @@ jobs:
         run: make
 
       - name: Compress
-        run: tar -czvf release.tar.gz bcov web/build/
+        run: tar -czvf bcov.tar.gz bcov web/build/
 
       - uses: ncipollo/release-action@v1.11.1
         with:
           omitBody: true
-          artifacts: release.tar.gz
+          artifacts: bcov.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
