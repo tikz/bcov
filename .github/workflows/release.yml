@@ -33,16 +33,16 @@ jobs:
           cache: "npm"
           cache-dependency-path: ./web/package-lock.json
 
-      - name: Makefile
+      - name: Build Makefile
         run: make
 
       - name: Compress
         run: tar -czvf release.tar.gz bcov web/build/
 
-      - name: Publish release
-      - uses: actions/checkout@v2
-      - uses: ncipollo/release-action@v1
-        with:
-          artifacts: "release.tar.gz"
-          bodyFile: "README.md"
-          token: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Publish release
+      # - uses: actions/checkout@v2
+      # - uses: ncipollo/release-action@v1
+      #   with:
+      #     artifacts: "release.tar.gz"
+      #     bodyFile: "README.md"
+      #     token: ${{ secrets.GITHUB_TOKEN }}
