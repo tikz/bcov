@@ -12,17 +12,19 @@
 name: "CodeQL"
 
 on:
+  schedule:
+    - cron: "0 13 * * *"
   push:
     branches: ["main", "develop"]
   pull_request:
-    # The branches below must be a subset of the branches above
     branches: ["main"]
-  schedule:
-    - cron: "25 17 * * 5"
+  create:
+    tags:
+      - v*
 
 jobs:
   analyze:
-    name: Analyze
+    name: analyze
     runs-on: ubuntu-latest
     permissions:
       actions: read

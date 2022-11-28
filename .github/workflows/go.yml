@@ -1,10 +1,15 @@
 name: Go
 
 on:
+  schedule:
+    - cron: "0 13 * * *"
   push:
     branches: ["main", "develop"]
   pull_request:
     branches: [main]
+  create:
+    tags:
+      - v*
 
 jobs:
   build:

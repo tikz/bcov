@@ -1,0 +1,21 @@
+name: Deploy
+
+on:
+  create:
+    tags:
+      - v*
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Load private key from secrets
+        run: echo "${{ secrets.EC2_KEY }}" >> key.pem; chmod 400 key.pem
+
+      - name: Deploy to EC2
+        run: ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_SSH_HOST }} 'docker-compose pull; docker-compose down; docker-compose up -d'
