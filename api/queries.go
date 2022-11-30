@@ -70,7 +70,8 @@ func queryExonVariants(kitId int, exonId int, filterSnp string, filterPathogenic
 	return variants
 }
 
-// queryKitReads returns average exon reads for a given kit. Missing positions from the database are filled with zeroes.
+// queryKitReads returns average exon reads for a given kit.
+// Missing positions from the database are filled with zeroes.
 func queryKitReads(exonId int, kitId int) []ReadCount {
 	var exon db.Exon
 	db.DB.Where("id = ?", exonId).First(&exon)
@@ -109,4 +110,19 @@ func queryKitReads(exonId int, kitId int) []ReadCount {
 	}
 
 	return filledReadCounts
+}
+
+// queryDepthCoverages returns the depth coverage from a given exon ID and kit ID.
+func queryDepthCoverages(exonId int, kitId int) []DepthCoverage {
+	var depthCoverages []DepthCoverage
+	db.DB.Raw(`
+			SELECT depth, avg(coverage) coverage from depth_coverages dc
+			INNER JOIN exon_depth_coverages edc on edc.id = dc.exon_depth_coverage_id
+			INNER JOIN bam_files bf on bf.id = edc.bam_file_id
+			INNER JOIN kits k on k.id = bf.kit_id
+			
+			WHERE exon_id = ? AND kit_id = ?
+			GROUP BY depth
+	`, exonId, kitId).Scan(&depthCoverages)
+	return depthCoverages
 }
