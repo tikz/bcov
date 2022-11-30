@@ -22,6 +22,27 @@ func queryExonVariants(kitId int, exonId int, filterSnp string, filterPathogenic
 		filterPathogenicQuery = fmt.Sprintf(`AND v.clin_sig LIKE "%%%s%%"`, "pathogenic")
 	}
 
+	// 	SELECT IFNULL(avg(range_read_counts), 0) read_count FROM (SELECT avg(count) range_read_counts
+	// FROM read_counts rc
+	// INNER JOIN exon_read_counts erc on rc.exon_read_count_id = erc.id AND erc.exon_id = 79442
+	// INNER JOIN bam_files bf on erc.bam_file_id = bf.id AND bf.kit_id = 2
+	// WHERE position < 43044834 AND position > 43044814
+	// GROUP BY position
+	// ORDER BY position DESC)
+
+	// SELECT variant_id as id, v.exon_id, v.clin_sig, v.protein_change, v.chromosome, v.start, v.end, (
+	// 	SELECT IFNULL(avg(range_read_counts), 0) read_count FROM (SELECT avg(count) range_read_counts
+	// 	FROM read_counts rc
+	// 	INNER JOIN exon_read_counts erc on rc.exon_read_count_id = erc.id AND erc.exon_id = v.exon_id
+	// 	INNER JOIN bam_files bf on erc.bam_file_id = bf.id AND bf.kit_id = 1
+	// 	WHERE position < v.start+10 AND position > v.start-10
+	// 	GROUP BY position
+	// 	ORDER BY position DESC)
+	// ) as depth FROM variants v
+	// INNER JOIN exons e on v.exon_id = e.id
+	// INNER JOIN genes g on e.gene_id = g.id
+	// WHERE g.name = "BRCA1"
+
 	variants := make([]Variant, 0)
 	db.DB.Raw(fmt.Sprintf(`
 			SELECT variant_id as id, v.clin_sig, v.protein_change, v.chromosome, v.start, v.end, (SELECT * FROM (SELECT round(avg(rc.count))
@@ -31,14 +52,14 @@ func queryExonVariants(kitId int, exonId int, filterSnp string, filterPathogenic
 			WHERE position >= v.start
 			GROUP BY position
 			ORDER BY position
-			LIMIT 10) UNION ALL SELECT * FROM (SELECT round(avg(count))
+			LIMIT 1) UNION ALL SELECT * FROM (SELECT round(avg(count))
 			FROM read_counts rc
 			INNER JOIN exon_read_counts erc on rc.exon_read_count_id = erc.id AND erc.exon_id = ?
 			INNER JOIN bam_files bf on erc.bam_file_id = bf.id AND bf.kit_id = ?
 			WHERE position < v.start
 			GROUP BY position
 			ORDER BY position DESC
-			LIMIT 10)
+			LIMIT 1)
 			LIMIT 1) as depth FROM variants v
 			
 			WHERE v.exon_id = ? %s %s

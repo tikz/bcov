@@ -42,6 +42,7 @@ func Endpoints() *gin.Engine {
 	r.GET("/api/variants/:kit_id/:exon_id", cache.CacheByRequestURI(memoryStore, cacheDuration), VariantsEndpoint)
 	r.GET("/api/bams/:kit_id", BAMsEndpoint)
 	r.GET("/api/variants-csv/:gene_name", cache.CacheByRequestURI(memoryStore, cacheDuration), VariantsCSVEndpoint)
+	r.GET("/api/gene-coverage/:gene_name", GeneCoverageEndpoint)
 
 	r.NoRoute(func(c *gin.Context) {
 		c.File("web/build/index.html")
@@ -218,6 +219,19 @@ func DepthCoveragesEndpoint(c *gin.Context) {
 	c.JSON(http.StatusOK, DepthCoveragesResponse{KitName: kit.Name, DepthCoverages: depthCoverages})
 }
 
+// BAMsEndpoint returns all loaded BAM files for a given kit ID
+func BAMsEndpoint(c *gin.Context) {
+	id := c.Param("kit_id")
+
+	var bams []db.BAMFile
+	result := db.DB.Where("kit_id = ?", id).Find(&bams)
+	if result.RowsAffected > 0 {
+		c.JSON(http.StatusOK, bams)
+	} else {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+	}
+}
+
 // VariantsEndpoint returns a list of variants that fall inside given a kit and exon database ID
 func VariantsEndpoint(c *gin.Context) {
 	// API inputs
@@ -289,15 +303,47 @@ func VariantsCSVEndpoint(c *gin.Context) {
 	c.String(http.StatusOK, buf.String())
 }
 
-// BAMsEndpoint returns all loaded BAM files for a given kit ID
-func BAMsEndpoint(c *gin.Context) {
-	id := c.Param("kit_id")
+// GeneCoverageEndpoint returns average coverage statistics for a given gene ID.
+func GeneCoverageEndpoint(c *gin.Context) {
+	name := c.Param("gene_name")
 
-	var bams []db.BAMFile
-	result := db.DB.Where("kit_id = ?", id).Find(&bams)
-	if result.RowsAffected > 0 {
-		c.JSON(http.StatusOK, bams)
-	} else {
-		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+	var kits []db.Kit
+	db.DB.Find(&kits)
+
+	var gene db.Gene
+	db.DB.Where("name = ?", name).Preload("Exons").Find(&gene)
+
+	variants := make([][]Variant, 0)
+
+	for _, kit := range kits {
+		kitVariants := make([]Variant, 0)
+		for _, exon := range gene.Exons {
+			kitVariants = append(kitVariants, queryExonVariants(int(kit.ID), int(exon.ID), "", false)...)
+		}
+
+		variants = append(variants, kitVariants)
 	}
+
+	buf := new(bytes.Buffer)
+	writer := csv.NewWriter(buf)
+
+	header := []string{"dbSNP ID", "Clinical significance", "Protein change", "Chromosome", "Start", "End"}
+	for _, kit := range kits {
+		header = append(header, kit.Name+" depth")
+	}
+	writer.Write(header)
+
+	for i, variant := range variants[0] {
+		line := []string{"rs" + variant.ID, variant.ClinSig, variant.ProteinChange, variant.Chromosome, fmt.Sprint(variant.Start), fmt.Sprint(variant.End)}
+		for j := range kits {
+			line = append(line, fmt.Sprint(variants[j][i].Depth))
+		}
+		writer.Write(line)
+	}
+
+	writer.Flush()
+
+	filename := fmt.Sprintf("%s_VariantsDepth.csv", name)
+	c.Writer.Header().Set("content-disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	c.String(http.StatusOK, buf.String())
 }
