@@ -42,7 +42,7 @@ func Endpoints() *gin.Engine {
 	r.GET("/api/variants/:kit_id/:exon_id", cache.CacheByRequestURI(memoryStore, cacheDuration), VariantsEndpoint)
 	r.GET("/api/bams/:kit_id", BAMsEndpoint)
 	r.GET("/api/variants-csv/:gene_name", cache.CacheByRequestURI(memoryStore, cacheDuration), VariantsCSVEndpoint)
-	r.GET("/api/gene-coverage/:gene_name", GeneCoverageEndpoint)
+	r.GET("/api/gene-coverage/:id", GeneCoverageEndpoint)
 
 	r.NoRoute(func(c *gin.Context) {
 		c.File("web/build/index.html")

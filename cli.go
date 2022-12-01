@@ -81,6 +81,7 @@ func parseFlags() {
 	flag.PrintDefaults()
 }
 
+// cliTestDB handles printing object counts from the database when called from the CLI
 func cliTestDB() {
 	db.ConnectDB()
 
@@ -100,6 +101,8 @@ func cliTestDB() {
 	fmt.Println("Depth coverages:", count)
 }
 
+// cliRegion handles showing per depth position of a given chromosome and start end position of a BAM file when called from the CLI
+// Used for debug purposes and quickly checking a BAM file content.
 func cliRegion() {
 	if *bam == "" {
 		fmt.Println("BAM file required.")
@@ -127,6 +130,7 @@ func cliRegion() {
 
 }
 
+// cliFetchExons handles the load of exons from Ensemble to the database when called from the CLI
 func cliFetchExons() {
 	db.ConnectDB()
 
@@ -183,6 +187,7 @@ func cliFetchExons() {
 	spinner.Stop(fmt.Sprintf("%d exons in %d genes", exonCount, len(geneExons)))
 }
 
+// cliFetchVariants handles the loading of variants from ClinVar to the database when called from the CLI
 func cliFetchVariants() {
 	db.ConnectDB()
 
@@ -251,6 +256,7 @@ func cliFetchVariants() {
 	spinner.Stop(fmt.Sprintf("%d variants", count))
 }
 
+// checkExonsDB handles showing a count of loaded exones when called from the CLI
 func checkExonsDB() {
 	var count int64
 	db.DB.Model(&db.Exon{}).Count(&count)
@@ -261,6 +267,7 @@ func checkExonsDB() {
 	}
 }
 
+// cliLoadBAM handles the load of a single BAM file by path when called from the CLI
 func cliLoadBAM() {
 	db.ConnectDB()
 	checkExonsDB()
@@ -273,6 +280,7 @@ func cliLoadBAM() {
 	cov.Load(*bam, *kit)
 }
 
+// cliLoadBAMs handles the load of multiple BAM files from a CSV file when called from the CLI
 func cliLoadBAMs() {
 	db.ConnectDB()
 	checkExonsDB()
@@ -299,6 +307,7 @@ func cliLoadBAMs() {
 	}
 }
 
+// cliDeleteBam handles the deleting a BAM file from the database by SHA256sum when called from the CLI
 func cliDeleteBam() {
 	db.ConnectDB()
 
