@@ -42,7 +42,7 @@ func Endpoints() *gin.Engine {
 	r.GET("/api/variants/:kit_id/:exon_id", cache.CacheByRequestURI(memoryStore, cacheDuration), VariantsEndpoint)
 	r.GET("/api/bams/:kit_id", BAMsEndpoint)
 	r.GET("/api/variants-csv/:gene_name", cache.CacheByRequestURI(memoryStore, cacheDuration), VariantsCSVEndpoint)
-	r.GET("/api/gene-coverage/:gene_name", GeneCoverageEndpoint)
+	r.GET("/api/gene-coverage/:id", GeneCoverageEndpoint)
 
 	r.NoRoute(func(c *gin.Context) {
 		c.File("web/build/index.html")
@@ -53,7 +53,7 @@ func Endpoints() *gin.Engine {
 
 // Endpoints logic
 
-// KitsEndpoint returns all the kits in the database
+// KitsEndpoint handles the response for all the kits in the database.
 func KitsEndpoint(c *gin.Context) {
 	var kits []db.Kit
 	result := db.DB.Find(&kits)
@@ -64,7 +64,7 @@ func KitsEndpoint(c *gin.Context) {
 	}
 }
 
-// GeneEndpoint returns details about a given gene passed by database ID
+// GeneEndpoint handles the response for details about a given gene passed by database ID.
 func GeneEndpoint(c *gin.Context) {
 	// API inputs
 	id := c.Param("id")
@@ -79,7 +79,7 @@ func GeneEndpoint(c *gin.Context) {
 	}
 }
 
-// ReadsEndpoint returns all reads for a given kit ID and exon ID
+// ReadsEndpoint returns all reads for a given kit ID and exon ID.
 func ReadsEndpoint(c *gin.Context) {
 	// API inputs
 	kitId, _ := strconv.Atoi(c.Param("kit_id"))
@@ -94,7 +94,7 @@ func ReadsEndpoint(c *gin.Context) {
 	c.JSON(http.StatusOK, ReadCountsResponse{KitName: kit.Name, ReadCounts: readCounts})
 }
 
-// KitEndpoint returns details about a given kit passed by database ID
+// KitEndpoint returns details about a given kit passed by database ID.
 func KitEndpoint(c *gin.Context) {
 	// API inputs
 	id := c.Param("id")
@@ -107,7 +107,7 @@ func KitEndpoint(c *gin.Context) {
 	}
 }
 
-// SearchGenesEndpoint returns a single gene that matches exactly or partially the HGNC name
+// SearchGenesEndpoint handles the response for a single gene that matches exactly or partially the HGNC name.
 func SearchGenesEndpoint(c *gin.Context) {
 	// API inputs
 	name := c.Param("name")
@@ -144,7 +144,7 @@ func SearchGenesEndpoint(c *gin.Context) {
 	c.JSON(http.StatusOK, genes)
 }
 
-// SearchKitsEndpoint returns details about a given kit that matches exactly or partially the given name
+// SearchKitsEndpoint handles the response for details about a given kit that matches exactly or partially a given name.
 func SearchKitsEndpoint(c *gin.Context) {
 	// API inputs
 	name := c.Param("name")
@@ -168,7 +168,7 @@ func SearchKitsEndpoint(c *gin.Context) {
 	c.JSON(http.StatusOK, kits)
 }
 
-// SearchVariantEndpoint returns details about a given variant by exact database ID
+// SearchVariantEndpoint handles the response for details about a given variant by ID.
 func SearchVariantEndpoint(c *gin.Context) {
 	// API inputs
 	id, _ := strconv.Atoi(strings.ReplaceAll(c.Param("id"), "rs", ""))
@@ -192,7 +192,7 @@ func SearchVariantEndpoint(c *gin.Context) {
 	c.JSON(http.StatusOK, variants)
 }
 
-// DepthCoveragesEndpoint returns the depth coverage for a given kit and exon by database ID
+// DepthCoveragesEndpoint handles the response for depth coverage for a given exon ID and kit ID.
 func DepthCoveragesEndpoint(c *gin.Context) {
 	// API inputs
 	kitId, _ := strconv.Atoi(c.Param("kit_id"))
@@ -202,16 +202,7 @@ func DepthCoveragesEndpoint(c *gin.Context) {
 	var exon db.Exon
 	db.DB.Where("id = ?", exonId).First(&exon)
 
-	var depthCoverages []DepthCoverage
-	db.DB.Raw(`
-			SELECT depth, avg(coverage) coverage from depth_coverages dc
-			INNER JOIN exon_depth_coverages edc on edc.id = dc.exon_depth_coverage_id
-			INNER JOIN bam_files bf on bf.id = edc.bam_file_id
-			INNER JOIN kits k on k.id = bf.kit_id
-			
-			WHERE exon_id = ? AND kit_id = ?
-			GROUP BY depth
-	`, exonId, kitId).Scan(&depthCoverages)
+	depthCoverages := queryDepthCoverages(exonId, kitId)
 
 	var kit db.Kit
 	db.DB.Where("id = ?", kitId).First(&kit)
@@ -219,7 +210,7 @@ func DepthCoveragesEndpoint(c *gin.Context) {
 	c.JSON(http.StatusOK, DepthCoveragesResponse{KitName: kit.Name, DepthCoverages: depthCoverages})
 }
 
-// BAMsEndpoint returns all loaded BAM files for a given kit ID
+// BAMsEndpoint handles the response for all loaded BAM files of a given kit ID.
 func BAMsEndpoint(c *gin.Context) {
 	id := c.Param("kit_id")
 
@@ -232,7 +223,7 @@ func BAMsEndpoint(c *gin.Context) {
 	}
 }
 
-// VariantsEndpoint returns a list of variants that fall inside given a kit and exon database ID
+// VariantsEndpoint handles the response for a list of variants that fall inside given a kit ID and exon ID.
 func VariantsEndpoint(c *gin.Context) {
 	// API inputs
 	kitId, _ := strconv.Atoi(c.Param("kit_id"))
@@ -258,7 +249,7 @@ func VariantsEndpoint(c *gin.Context) {
 	c.JSON(http.StatusOK, VariantsResult{TotalCount: len(variants), Pages: int(math.Ceil(float64(len(variants)) / float64(perPage))), CurrentPage: page, Variants: variants[start:end]})
 }
 
-// VariantsCSVEndpoint returns a CSV file response for a given HGNC gene name
+// VariantsCSVEndpoint handles the response for a given HGNC gene name returning a CSV file.
 func VariantsCSVEndpoint(c *gin.Context) {
 	name := c.Param("gene_name")
 

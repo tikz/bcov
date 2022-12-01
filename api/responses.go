@@ -45,3 +45,13 @@ type VariantsResult struct {
 	CurrentPage int       `json:"currentPage"`
 	Variants    []Variant `json:"variants"`
 }
+
+type VariantDepth struct {
+	ID            int    `json:"id"`
+	ExonNumber    int    `json:"exonNumber"`
+	ClinSig       string `json:"clinSig"`
+	ProteinChange string `json:"proteinChange"`
+	Chromosome    string `json:"chromosome"`
+	Position      uint64 `json:"position"`
+	Depth         uint64 `json:"depth"`
+}

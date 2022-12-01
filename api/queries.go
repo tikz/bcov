@@ -37,7 +37,8 @@ func queryExonVariants(kitId int, exonId int, filterSnp string, filterPathogenic
 	// 	INNER JOIN bam_files bf on erc.bam_file_id = bf.id AND bf.kit_id = 1
 	// 	WHERE position < v.start+10 AND position > v.start-10
 	// 	GROUP BY position
-	// 	ORDER BY position DESC)
+	// 	ORDER BY position DESC
+	// 	)
 	// ) as depth FROM variants v
 	// INNER JOIN exons e on v.exon_id = e.id
 	// INNER JOIN genes g on e.gene_id = g.id
@@ -70,7 +71,8 @@ func queryExonVariants(kitId int, exonId int, filterSnp string, filterPathogenic
 	return variants
 }
 
-// queryKitReads returns average exon reads for a given kit. Missing positions from the database are filled with zeroes.
+// queryKitReads returns average exon reads for a given kit.
+// Missing positions from the database are filled with zeroes.
 func queryKitReads(exonId int, kitId int) []ReadCount {
 	var exon db.Exon
 	db.DB.Where("id = ?", exonId).First(&exon)
@@ -109,4 +111,41 @@ func queryKitReads(exonId int, kitId int) []ReadCount {
 	}
 
 	return filledReadCounts
+}
+
+// queryDepthCoverages returns the depth coverage from a given exon ID and kit ID.
+func queryDepthCoverages(exonId int, kitId int) []DepthCoverage {
+	var depthCoverages []DepthCoverage
+	db.DB.Raw(`
+			SELECT depth, avg(coverage) coverage from depth_coverages dc
+			INNER JOIN exon_depth_coverages edc on edc.id = dc.exon_depth_coverage_id
+			INNER JOIN bam_files bf on bf.id = edc.bam_file_id
+			INNER JOIN kits k on k.id = bf.kit_id
+			
+			WHERE exon_id = ? AND kit_id = ?
+			GROUP BY depth
+	`, exonId, kitId).Scan(&depthCoverages)
+	return depthCoverages
+}
+
+// queryGeneVariantsDepth returns the average depth of all variants of a gene given a kit ID and gene ID
+func queryGeneVariantsDepth(kitId int, geneId int) []VariantDepth {
+	var variantsDepth []VariantDepth
+	db.DB.Raw(`
+	SELECT variant_id as id, v.exon_id, v.clin_sig, v.protein_change, v.chromosome, v.start, v.end, (
+		SELECT IFNULL(avg(range_read_counts), 0) read_count FROM (SELECT avg(count) range_read_counts
+		FROM read_counts rc
+		INNER JOIN exon_read_counts erc on rc.exon_read_count_id = erc.id AND erc.exon_id = v.exon_id
+		INNER JOIN bam_files bf on erc.bam_file_id = bf.id AND bf.kit_id = ?
+		WHERE position < v.start+10 AND position > v.start-10
+		GROUP BY position
+		ORDER BY position DESC
+		)
+	) as depth FROM variants v
+	INNER JOIN exons e on v.exon_id = e.id
+	INNER JOIN genes g on e.gene_id = g.id
+	WHERE g.id = ?
+	`, kitId, geneId)
+
+	return variantsDepth
 }
