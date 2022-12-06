@@ -42,7 +42,7 @@ func Endpoints() *gin.Engine {
 	r.GET("/api/variants/:kit_id/:exon_id", cache.CacheByRequestURI(memoryStore, cacheDuration), VariantsEndpoint)
 	r.GET("/api/bams/:kit_id", BAMsEndpoint)
 	r.GET("/api/variants-csv/:gene_name", cache.CacheByRequestURI(memoryStore, cacheDuration), VariantsCSVEndpoint)
-	r.GET("/api/gene-coverage/:id", GeneCoverageEndpoint)
+	r.GET("/api/gene-coverage/:kit_id/:gene_id", GeneCoverageEndpoint)
 
 	r.NoRoute(func(c *gin.Context) {
 		c.File("web/build/index.html")
@@ -202,7 +202,7 @@ func DepthCoveragesEndpoint(c *gin.Context) {
 	var exon db.Exon
 	db.DB.Where("id = ?", exonId).First(&exon)
 
-	depthCoverages := queryDepthCoverages(exonId, kitId)
+	depthCoverages := queryExonDepthCoverages(exonId, kitId)
 
 	var kit db.Kit
 	db.DB.Where("id = ?", kitId).First(&kit)
@@ -296,45 +296,11 @@ func VariantsCSVEndpoint(c *gin.Context) {
 
 // GeneCoverageEndpoint returns average coverage statistics for a given gene ID.
 func GeneCoverageEndpoint(c *gin.Context) {
-	name := c.Param("gene_name")
+	// // API inputs
+	kitId, _ := strconv.Atoi(c.Param("kit_id"))
+	geneId, _ := strconv.Atoi(c.Param("gene_id"))
 
-	var kits []db.Kit
-	db.DB.Find(&kits)
+	depthCoverage := queryGeneDepthCoverage(kitId, geneId)
 
-	var gene db.Gene
-	db.DB.Where("name = ?", name).Preload("Exons").Find(&gene)
-
-	variants := make([][]Variant, 0)
-
-	for _, kit := range kits {
-		kitVariants := make([]Variant, 0)
-		for _, exon := range gene.Exons {
-			kitVariants = append(kitVariants, queryExonVariants(int(kit.ID), int(exon.ID), "", false)...)
-		}
-
-		variants = append(variants, kitVariants)
-	}
-
-	buf := new(bytes.Buffer)
-	writer := csv.NewWriter(buf)
-
-	header := []string{"dbSNP ID", "Clinical significance", "Protein change", "Chromosome", "Start", "End"}
-	for _, kit := range kits {
-		header = append(header, kit.Name+" depth")
-	}
-	writer.Write(header)
-
-	for i, variant := range variants[0] {
-		line := []string{"rs" + variant.ID, variant.ClinSig, variant.ProteinChange, variant.Chromosome, fmt.Sprint(variant.Start), fmt.Sprint(variant.End)}
-		for j := range kits {
-			line = append(line, fmt.Sprint(variants[j][i].Depth))
-		}
-		writer.Write(line)
-	}
-
-	writer.Flush()
-
-	filename := fmt.Sprintf("%s_VariantsDepth.csv", name)
-	c.Writer.Header().Set("content-disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
-	c.String(http.StatusOK, buf.String())
+	c.JSON(http.StatusOK, depthCoverage)
 }

@@ -221,8 +221,8 @@ export default ({ kits, exonId, variant }: VariantsProps) => {
                           return (
                             <Tooltip title={k.name} arrow>
                               <div
-                                className={`variant-depth ${
-                                  depth < 30 ? "variant-depth-muted" : ""
+                                className={`depth ${
+                                  depth < 30 ? "depth-muted" : ""
                                 }`}
                               >
                                 <CircleIcon

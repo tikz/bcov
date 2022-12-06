@@ -12,7 +12,8 @@ import React, { ReactElement } from "react";
 import { Gene, ISearchResult, Kit, Variant } from "../definitions";
 import api from "../services";
 import { stringToColor } from "../theme";
-import Results from "./Results/Results";
+import GeneResults from "./Results/Results";
+import GenesResults from "./Results/ResultsGenes";
 
 export default () => {
   const [value, setValue] = React.useState<ISearchResult[]>([]);
@@ -195,7 +196,7 @@ export default () => {
       </Grid>
       <Box sx={{ height: 40 }}>{helperText}</Box>
       {open && (
-        <Results
+        <GeneResults
           open={open}
           onClose={handleClose}
           genes={value.filter((v): v is Gene => v instanceof Gene)}
@@ -203,6 +204,13 @@ export default () => {
           variants={value.filter((v): v is Variant => v instanceof Variant)}
         />
       )}
+
+      <GenesResults
+        open={true}
+        onClose={handleClose}
+        genes={[new Gene({ id: 2, name: "BRCA2" } as any)]}
+        kits={[new Kit({ id: 2, name: "SureSelect" } as any)]}
+      />
     </>
   );
 };

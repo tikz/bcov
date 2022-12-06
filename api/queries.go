@@ -113,8 +113,8 @@ func queryKitReads(exonId int, kitId int) []ReadCount {
 	return filledReadCounts
 }
 
-// queryDepthCoverages returns the depth coverage from a given exon ID and kit ID.
-func queryDepthCoverages(exonId int, kitId int) []DepthCoverage {
+// queryExonDepthCoverages returns the depth coverage from a given exon ID and kit ID.
+func queryExonDepthCoverages(exonId int, kitId int) []DepthCoverage {
 	var depthCoverages []DepthCoverage
 	db.DB.Raw(`
 			SELECT depth, avg(coverage) coverage from depth_coverages dc
@@ -126,6 +126,21 @@ func queryDepthCoverages(exonId int, kitId int) []DepthCoverage {
 			GROUP BY depth
 	`, exonId, kitId).Scan(&depthCoverages)
 	return depthCoverages
+}
+
+// queryGeneDepthCoverage returns average 20X coverage for a given kit ID and gene ID
+func queryGeneDepthCoverage(kitId int, geneId int) DepthCoverage {
+	var depthCoverage DepthCoverage
+	db.DB.Raw(`
+			SELECT depth, avg(coverage) coverage from genes g
+			INNER JOIN exons e on e.gene_id = g.id
+			INNER JOIN exon_depth_coverages edc on edc.exon_id = e.id
+			INNER JOIN bam_files bf on edc.bam_file_id = bf.id
+			INNER JOIN kits k on bf.kit_id = k.id
+			INNER JOIN depth_coverages dc on dc.exon_depth_coverage_id = edc.id
+			WHERE k.id = ? AND g.id = ? AND dc.depth = 20
+	`, kitId, geneId).Scan(&depthCoverage)
+	return depthCoverage
 }
 
 // queryGeneVariantsDepth returns the average depth of all variants of a gene given a kit ID and gene ID

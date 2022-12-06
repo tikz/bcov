@@ -73,8 +73,8 @@ type ExonDepthCoverage struct {
 type DepthCoverage struct {
 	ID                  uint  `gorm:"primarykey" json:"-"`
 	ExonDepthCoverageID uint  `gorm:"index" json:"-"`
-	Depth               uint8 `json:"depth"`
-	Coverage            uint8 `json:"coverage"`
+	Depth               uint8 `gorm:"index" json:"depth"`
+	Coverage            uint8 `gorm:"index" json:"coverage"`
 }
 
 type Variant struct {

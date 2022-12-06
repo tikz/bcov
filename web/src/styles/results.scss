@@ -62,19 +62,22 @@
   color: #cd5353 !important;
 }
 
-.variant-depth {
+.depth {
   text-align: left;
   width: 45px;
   font-size: 12px;
   font-weight: bold;
+  width: auto;
+  margin-left: 10px;
 }
 
-.variant-depth .MuiSvgIcon-root {
+.depth .MuiSvgIcon-root {
   font-size: 16px;
   margin-right: 2px;
+  vertical-align: sub;
 }
 
-.variant-depth-muted {
+.depth-muted {
   color: rgb(122, 122, 122);
   font-weight: normal;
 }
