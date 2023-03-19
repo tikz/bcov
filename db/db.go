@@ -57,7 +57,7 @@ func ConnectSQLite() {
 		log.Fatalf("failed to connect database: %s", err)
 	}
 
-	if res := DB.Exec("PRAGMA synchronous = OFF; PRAGMA foreign_keys = ON;", nil); res.Error != nil {
+	if res := DB.Exec("PRAGMA synchronous = OFF; PRAGMA foreign_keys = ON; PRAGMA analysis_limit=0; PRAGMA optimize; ANALYZE;", nil); res.Error != nil {
 		panic(res.Error)
 	}
 }

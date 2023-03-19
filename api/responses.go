@@ -22,6 +22,14 @@ type DepthCoveragesResponse struct {
 	DepthCoverages []DepthCoverage `json:"depthCoverages"`
 }
 
+type KitGeneDepthCoverage struct {
+	ID       uint64        `json:"id"`
+	Name     string        `json:"name"`
+	Depth    uint64        `json:"depth"`
+	Coverage float64       `json:"coverage"`
+	Variants VariantsDepth `json:"variants" gorm:"-"`
+}
+
 type VariantSearch struct {
 	ID         uint64  `json:"id"`
 	Gene       db.Gene `json:"gene"`
@@ -47,11 +55,12 @@ type VariantsResult struct {
 }
 
 type VariantDepth struct {
-	ID            int    `json:"id"`
-	ExonNumber    int    `json:"exonNumber"`
-	ClinSig       string `json:"clinSig"`
-	ProteinChange string `json:"proteinChange"`
-	Chromosome    string `json:"chromosome"`
-	Position      uint64 `json:"position"`
-	Depth         uint64 `json:"depth"`
+	ID    int     `json:"id"`
+	Depth float64 `json:"depth"`
+}
+
+type VariantsDepth struct {
+	Total             int            `json:"total"`
+	Covered           int            `json:"covered"`
+	UncoveredVariants []VariantDepth `json:"uncoveredVariants"`
 }

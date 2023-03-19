@@ -42,7 +42,7 @@ func Endpoints() *gin.Engine {
 	r.GET("/api/variants/:kit_id/:exon_id", cache.CacheByRequestURI(memoryStore, cacheDuration), VariantsEndpoint)
 	r.GET("/api/bams/:kit_id", BAMsEndpoint)
 	r.GET("/api/variants-csv/:gene_name", cache.CacheByRequestURI(memoryStore, cacheDuration), VariantsCSVEndpoint)
-	r.GET("/api/gene-coverage/:kit_id/:gene_id", GeneCoverageEndpoint)
+	r.GET("/api/gene-coverage/:gene_id", GeneCoverageEndpoint)
 
 	r.NoRoute(func(c *gin.Context) {
 		c.File("web/build/index.html")
@@ -296,11 +296,30 @@ func VariantsCSVEndpoint(c *gin.Context) {
 
 // GeneCoverageEndpoint returns average coverage statistics for a given gene ID.
 func GeneCoverageEndpoint(c *gin.Context) {
-	// // API inputs
-	kitId, _ := strconv.Atoi(c.Param("kit_id"))
+	// API inputs
 	geneId, _ := strconv.Atoi(c.Param("gene_id"))
+	kitIdsInput := strings.Split(c.Query("kit_ids"), ",")
 
-	depthCoverage := queryGeneDepthCoverage(kitId, geneId)
+	// Parse list of kit ids from query
+	var kitIds []int
+	for _, kitIdStr := range kitIdsInput {
+		kitId, err := strconv.Atoi(kitIdStr)
+		if err == nil {
+			kitIds = append(kitIds, kitId)
+		}
+	}
 
-	c.JSON(http.StatusOK, depthCoverage)
+	var kits []KitGeneDepthCoverage
+
+	kitGeneCoverages := queryGeneDepthCoverage(geneId)
+	for _, kitGeneCoverage := range kitGeneCoverages {
+		for _, kitId := range kitIds {
+			if uint64(kitId) == kitGeneCoverage.ID {
+				kitGeneCoverage.Variants = queryGeneVariantsDepth(kitId, geneId)
+				kits = append(kits, kitGeneCoverage)
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, kits)
 }

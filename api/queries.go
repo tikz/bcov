@@ -128,25 +128,26 @@ func queryExonDepthCoverages(exonId int, kitId int) []DepthCoverage {
 	return depthCoverages
 }
 
-// queryGeneDepthCoverage returns average 20X coverage for a given kit ID and gene ID
-func queryGeneDepthCoverage(kitId int, geneId int) DepthCoverage {
-	var depthCoverage DepthCoverage
+// queryGeneDepthCoverage returns average 20X coverage for a given gene ID and all kits
+func queryGeneDepthCoverage(geneId int) []KitGeneDepthCoverage {
+	var kitGeneDepthCoverage []KitGeneDepthCoverage
 	db.DB.Raw(`
-			SELECT depth, avg(coverage) coverage from genes g
+			SELECT k.id, k.name, depth, avg(coverage) coverage from genes g
 			INNER JOIN exons e on e.gene_id = g.id
 			INNER JOIN exon_depth_coverages edc on edc.exon_id = e.id
 			INNER JOIN bam_files bf on edc.bam_file_id = bf.id
 			INNER JOIN kits k on bf.kit_id = k.id
 			INNER JOIN depth_coverages dc on dc.exon_depth_coverage_id = edc.id
-			WHERE k.id = ? AND g.id = ? AND dc.depth = 20
-	`, kitId, geneId).Scan(&depthCoverage)
-	return depthCoverage
+			WHERE g.id = ? AND dc.depth = 20
+			GROUP BY k.id
+	`, geneId).Scan(&kitGeneDepthCoverage)
+	return kitGeneDepthCoverage
 }
 
 // queryGeneVariantsDepth returns the average depth of all variants of a gene given a kit ID and gene ID
-func queryGeneVariantsDepth(kitId int, geneId int) []VariantDepth {
-	var variantsDepth []VariantDepth
-	db.DB.Raw(`
+func queryGeneVariantsDepth(kitId int, geneId int) VariantsDepth {
+	var variantsDepth VariantsDepth
+	rows, err := db.DB.Raw(`
 	SELECT variant_id as id, v.exon_id, v.clin_sig, v.protein_change, v.chromosome, v.start, v.end, (
 		SELECT IFNULL(avg(range_read_counts), 0) read_count FROM (SELECT avg(count) range_read_counts
 		FROM read_counts rc
@@ -160,7 +161,31 @@ func queryGeneVariantsDepth(kitId int, geneId int) []VariantDepth {
 	INNER JOIN exons e on v.exon_id = e.id
 	INNER JOIN genes g on e.gene_id = g.id
 	WHERE g.id = ?
-	`, kitId, geneId)
+	`, kitId, geneId).Rows()
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer rows.Close()
+
+	total := 0
+	covered := 0
+	depth := 20.0
+
+	for rows.Next() {
+		var variantDepth VariantDepth
+		// ScanRows is a method of `gorm.DB`, it can be used to scan a row into a struct
+		db.DB.ScanRows(rows, &variantDepth)
+		if variantDepth.Depth >= depth {
+			covered++
+		} else {
+			variantsDepth.UncoveredVariants = append(variantsDepth.UncoveredVariants, variantDepth)
+		}
+		total++
+	}
+	variantsDepth.Total = total
+	variantsDepth.Covered = covered
 
 	return variantsDepth
 }
